@@ -448,34 +448,22 @@
             }
         }
 
-        // REGLA OBLIGATORIA TRANSVERSAL DE TIEMPO Y ENGAGEMENT PEDAGÓGICO + SISTEMA DE DISEÑO VISUAL OFFLINE
-        const mandatoryTenMinuteRule = `\n\nREGLA OBLIGATORIA DE TIEMPO Y ENGAGEMENT PEDAGÓGICO (MÍNIMO 10 MINUTOS DE JUEGO):
-Todo OVA generado DEBE estar diseñado para garantizar un tiempo de interacción activa de por lo menos 10 minutos por parte del estudiante:
-1. ARQUITECTURA MULTINIVEL / RONDAS: El juego NO puede ser una dinámica corta de 1 o 2 minutos. DEBE estructurarse en rondas o niveles progresivos rejugables que demanden un tiempo de resolución reflexiva de mínimo 10 minutos.
-2. TEMPORIZADOR VISIBLE EN EL HUD: Añade en la barra superior un cronómetro de práctica: '⏱️ Tiempo de Práctica: MM:SS / Meta mínima: 10:00 min'.
-3. CANDADO DE FINALIZACIÓN: Si el estudiante completa los niveles antes de los 10 minutos, el juego debe habilitar una 'Ronda de Maestría / Bonificación' para seguir practicando hasta cumplir la meta de 10 minutos.
+        // CONSTRUCCIÓN DEL PROMPT FINAL (100% IDÉNTICO AL COPIAR Y PEGAR DEL ARCHIVO ORIGINAL)
+        function buildFinalPrompt(dinamica, temaUsuario, gradoUsuario) {
+            let prompt = String(dinamica.content || dinamica.template || '');
 
-ESTÁNDAR DE DISEÑO VISUAL OFFLINE Y RESPONSIVE OBLIGATORIO:
-El archivo HTML generado debe verse como una aplicación web moderna de alta gama sin depender de internet:
-- ESTILOS EMBEBIDOS: Todo el CSS dentro de <style>. Usa tipografía nativa: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif.
-- PALETA MODERNA: Fondo de página suave (#f8fafc), contenedores y tarjetas en blanco (#ffffff) con bordes suaves (1px solid #e2e8f0), radio de esquinas moderno (border-radius: 16px) y sombras sutiles (box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08)).
-- BOTONES Y ZONAS TÁCTILES: Botones con padding amplio, bordes redondeados (10px a 12px), altura mínima de 44px para dedos en móviles, con efectos activos suaves (transform: scale(0.98)).
-- CRUCIGRAMAS Y MATRICES: Los tableros deben usar CSS Grid compacto y centrado (max-width: 500px; margin: 0 auto;). Todas las celdas deben tener aspect-ratio: 1 y los inputs deben tener obligatoriamente: \`width: 100% !important; height: 100% !important; border: none !important; outline: none !important; background: transparent !important; text-align: center !important; font-weight: 800; font-size: clamp(14px, 3vw, 18px); padding: 0 !important; margin: 0 !important;\`.
-- SOPA DE LETRAS: Grid fluido con aspect-ratio: 1, selección táctil continua con pointerdown, pointermove (document.elementFromPoint) y pointerup.
-- CRONÓMETRO Y HUD: Barra superior visible con tiempo transcurrido (Meta: 10:00 min), puntaje y calificación (1.0 a 5.0).
-- ICONOS EN SVG: Cualquier icono visual debe ser código <svg> inline nativo.`;
-
-        // CONSTRUCCIÓN DEL PROMPT FINAL
-        function buildFinalPrompt(template, tema, grado, extra) {
-            let prompt = template
-                .replace(/\{\{TEMA\}\}/g, tema)
-                .replace(/\{\{GRADO\}\}/g, grado);
-
-            // Inyectar obligatoriamente la regla transversal de 10 minutos y el sistema de diseño visual offline
-            prompt += mandatoryTenMinuteRule;
-
-            if (extra && extra.trim().length > 0) {
-                prompt += `\n\nINDICACIONES Y PALABRAS CLAVE OBLIGATORIAS ADICIONALES SUMINISTRADAS POR EL DOCENTE:\n${extra.trim()}`;
+            if (dinamica.id >= 1 && dinamica.id <= 19) {
+                prompt = prompt
+                    .replace(/^TEMA:\s*\[.*?\]/m, `TEMA: [${temaUsuario}]`)
+                    .replace(/^NIVEL EDUCATIVO:\s*\[.*?\]/m, `NIVEL EDUCATIVO: [${gradoUsuario}]`);
+            } else if (dinamica.id === 20) {
+                prompt = prompt
+                    .replace(/^TEMA DEL OVA:\s*\[.*?\]/m, `TEMA DEL OVA: [${temaUsuario}]`)
+                    .replace(/^GRADO \/ EDAD:\s*\[.*?\]/m, `GRADO / EDAD: [${gradoUsuario}]`);
+            } else if (dinamica.id === 21) {
+                prompt = prompt
+                    .replace(/^TEMA CURRICULAR:\s*\[.*?\]/m, `TEMA CURRICULAR: [${temaUsuario}]`)
+                    .replace(/^(POBLACIÓN OBJETIVO:.*)$/m, `$1 (Grado: ${gradoUsuario})`);
             }
 
             return prompt;
@@ -483,10 +471,9 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
 
         // COPIAR EL PROMPT COMPILADO AL PORTAPAPELES
         async function copyCompiledPrompt() {
-            const tema = document.getElementById('input-tema').value.trim() || '[Tema Curricular]';
-            const grado = document.getElementById('input-grado').value.trim() || '[Grado Escolar]';
+            const tema = document.getElementById('input-tema').value.trim() || 'La célula';
+            const grado = document.getElementById('input-grado').value.trim() || 'Grado 6° de Secundaria (11-12 años)';
             const dinamicaId = parseInt(document.getElementById('select-dinamica').value);
-            const extra = document.getElementById('input-extra').value.trim();
 
             const dinamica = promptsList.find(p => p.id === dinamicaId);
             if (!dinamica) {
@@ -494,10 +481,10 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
                 return;
             }
 
-            const finalPrompt = buildFinalPrompt(dinamica.template, tema, grado, extra);
+            const finalPrompt = buildFinalPrompt(dinamica, tema, grado);
             try {
                 await navigator.clipboard.writeText(finalPrompt);
-                showToast('Prompt Maestro copiado al portapapeles', '📋');
+                showToast('Prompt Maestro original copiado al portapapeles', '📋');
             } catch (err) {
                 const ta = document.createElement('textarea');
                 ta.value = finalPrompt;
@@ -505,7 +492,7 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-                showToast('Prompt Maestro copiado al portapapeles', '📋');
+                showToast('Prompt Maestro original copiado al portapapeles', '📋');
             }
         }
 
@@ -513,7 +500,13 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
         function extractCleanHtml(rawContent) {
             if (!rawContent) return '';
 
-            // Prioridad 1: Extraer directamente desde <!DOCTYPE html> hasta </html> (funciona con o sin bloques ```)
+            // Prioridad 1: Buscar bloque ```html ... ```
+            const match = rawContent.match(/```html\s*([\s\S]*?)\s*```/i);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+
+            // Prioridad 2: Extraer directamente desde <!DOCTYPE html> hasta </html>
             const docTypeIndex = rawContent.search(/<!DOCTYPE\s+html/i);
             if (docTypeIndex !== -1) {
                 const htmlEndIndex = rawContent.toLowerCase().lastIndexOf('</html>');
@@ -521,12 +514,6 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
                     return rawContent.substring(docTypeIndex, htmlEndIndex + 7).trim();
                 }
                 return rawContent.substring(docTypeIndex).replace(/```\s*$/, '').trim();
-            }
-
-            // Prioridad 2: Buscar bloque ```html ... ```
-            const match = rawContent.match(/```html\s*([\s\S]*?)\s*```/i);
-            if (match && match[1]) {
-                return match[1].trim();
             }
 
             // Prioridad 3: Si vino con ``` ... ``` genérico
@@ -545,7 +532,6 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
             const tema = document.getElementById('input-tema').value.trim();
             const grado = document.getElementById('input-grado').value.trim();
             const dinamicaId = parseInt(document.getElementById('select-dinamica').value);
-            const extra = document.getElementById('input-extra').value.trim();
             const model = document.getElementById('select-model').value;
             const personalKey = localStorage.getItem('teacherstools_openrouter_key') || '';
 
@@ -567,44 +553,35 @@ El archivo HTML generado debe verse como una aplicación web moderna de alta gam
                 return;
             }
 
-            // Preparar UI
+            // Preparar UI y armar el prompt idéntico al copiar y pegar
             setGeneratingState(true);
-            const finalPrompt = buildFinalPrompt(dinamica.template, tema, grado, extra);
-
-            const systemPrompt = `Actúa como un Desarrollador Web Front-End Senior y Diseñador Instruccional de clase mundial.
-Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado, cumpliendo con fidelidad ESTRICTA las especificaciones del prompt del usuario.
-
-ESTÁNDAR DE DISEÑO VISUAL OFFLINE Y RESPONSIVE OBLIGATORIO:
-El archivo HTML generado debe verse como una aplicación web moderna de alta gama sin depender de internet:
-- ESTILOS EMBEBIDOS: Todo el CSS dentro de <style>. Usa tipografía nativa: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif.
-- PALETA MODERNA: Fondo de página suave (#f8fafc), contenedores y tarjetas en blanco (#ffffff) con bordes suaves (1px solid #e2e8f0), radio de esquinas moderno (border-radius: 16px) y sombras sutiles (box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08)).
-- BOTONES Y ZONAS TÁCTILES: Botones con padding amplio, bordes redondeados (10px a 12px), altura mínima de 44px para dedos en móviles, con efectos activos suaves (transform: scale(0.98)).
-- CRUCIGRAMAS Y MATRICES: Los tableros deben usar CSS Grid compacto y centrado (max-width: 500px; margin: 0 auto;). Todas las celdas deben tener aspect-ratio: 1 y los inputs deben tener obligatoriamente: \`width: 100% !important; height: 100% !important; border: none !important; outline: none !important; background: transparent !important; text-align: center !important; font-weight: 800; font-size: clamp(14px, 3vw, 18px); padding: 0 !important; margin: 0 !important;\`.
-- SOPA DE LETRAS: Grid fluido con aspect-ratio: 1, selección táctil continua con pointerdown, pointermove (document.elementFromPoint) y pointerup.
-- CRONÓMETRO Y HUD: Barra superior visible con tiempo transcurrido (Meta: 10:00 min), puntaje y calificación (1.0 a 5.0).
-- ICONOS EN SVG: Cualquier icono visual debe ser código <svg> inline nativo.
-
-REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
-- CERO ALUCINACIONES EN ACERTIJOS Y CÓDIGOS: En Escape Room (4 salas secuenciales), cada acertijo debe plantear explícitamente los datos numéricos y la operación matemática cuyo resultado exacto sea el código de 3-4 dígitos validado en JavaScript.
-- FASE 3 VISIBLE (>500 PALABRAS): Incluye el artículo teórico profundo (>500 palabras reales) y las 10 actividades del Taller de Repaso basadas estrictamente en la lectura.
-- CSS COMPACTO Y SCRIPT COMPLETO: Escribe las reglas CSS de forma compacta para garantizar que todo el bloque de script y la llamada a initGame() lleguen hasta el cierre <\/script><\/body><\/html> sin cortarse. Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\`.`;
+            const promptCompletoReemplazado = buildFinalPrompt(dinamica, tema, grado);
 
             try {
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt: finalPrompt,
-                        systemPrompt: systemPrompt,
                         model: model,
+                        messages: [{ role: 'user', content: promptCompletoReemplazado }],
+                        prompt: promptCompletoReemplazado,
                         apiKey: personalKey
                     })
                 });
 
-                const data = await res.json();
+                const rawText = await res.text();
+                let data = {};
+                try {
+                    data = JSON.parse(rawText);
+                } catch (jsonErr) {
+                    if (!res.ok) {
+                        throw new Error(`El servidor tardó demasiado o devolvió estado HTTP ${res.status}. Por favor intenta nuevamente.`);
+                    }
+                    throw new Error('La respuesta del servidor no es un JSON válido.');
+                }
 
                 if (!res.ok) {
-                    throw new Error(data.error || 'Error al generar el recurso.');
+                    throw new Error(data.error || `Error HTTP ${res.status} al generar el recurso.`);
                 }
 
                 const cleanHtml = extractCleanHtml(data.content);

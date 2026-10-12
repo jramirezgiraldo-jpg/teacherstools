@@ -165,8 +165,8 @@ function sendJSON(res, statusCode, data) {
     res.end(JSON.stringify(data));
 }
 
-// Petición HTTPS genérica
-function httpsPostJSON(hostname, pathUrl, headers, payloadObj, timeoutMs = 120000) {
+// Petición HTTPS genérica con timeout extendido de 240s (4 minutos)
+function httpsPostJSON(hostname, pathUrl, headers, payloadObj, timeoutMs = 240000) {
     return new Promise((resolve, reject) => {
         const postData = JSON.stringify(payloadObj);
         const options = {
@@ -206,10 +206,13 @@ function httpsPostJSON(hostname, pathUrl, headers, payloadObj, timeoutMs = 12000
 }
 
 // ============================================================================
-// ADAPTADORES POR PROVEEDOR IA (GEMINI, GROQ, MISTRAL, CEREBRAS, NVIDIA, DEEPSEEK, OPENROUTER)
+// ADAPTADORES POR PROVEEDOR IA (OPENROUTER + POOL MULTI-API)
 // ============================================================================
-async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
+async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
     const { provider, key } = entry;
+    const cleanMessages = Array.isArray(messagesArray) && messagesArray.length > 0
+        ? messagesArray
+        : [{ role: 'user', content: userPrompt }];
 
     // 1. GOOGLE GEMINI API (100% Gratis en Google AI Studio)
     if (provider === 'gemini') {
@@ -218,10 +221,9 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         for (const gm of geminiModels) {
             const pathUrl = `/v1beta/models/${gm}:generateContent?key=${encodeURIComponent(key)}`;
             const payload = {
-                systemInstruction: { parts: [{ text: systemPrompt }] },
                 contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
                 generationConfig: {
-                    temperature: 0.3,
+                    temperature: 0.4,
                     maxOutputTokens: 8192
                 }
             };
@@ -242,16 +244,13 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         };
     }
 
-    // 2. GROQ CLOUD API (100% Gratis - Ultra rápido)
+    // 2. GROQ CLOUD API
     if (provider === 'groq') {
         const groqModel = 'llama-3.3-70b-versatile';
         const payload = {
             model: groqModel,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3,
+            messages: cleanMessages,
+            temperature: 0.4,
             max_tokens: 8000
         };
         const resp = await httpsPostJSON('api.groq.com', '/openai/v1/chat/completions', {
@@ -270,12 +269,9 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         const mistralModel = 'codestral-latest';
         const payload = {
             model: mistralModel,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3,
-            max_tokens: 8000
+            messages: cleanMessages,
+            temperature: 0.4,
+            max_tokens: 12000
         };
         const resp = await httpsPostJSON('api.mistral.ai', '/v1/chat/completions', {
             'Authorization': `Bearer ${key}`
@@ -293,11 +289,8 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         const cerebrasModel = 'llama-3.3-70b';
         const payload = {
             model: cerebrasModel,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3,
+            messages: cleanMessages,
+            temperature: 0.4,
             max_tokens: 8000
         };
         const resp = await httpsPostJSON('api.cerebras.ai', '/v1/chat/completions', {
@@ -316,11 +309,8 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         const nvidiaModel = 'meta/llama-3.3-70b-instruct';
         const payload = {
             model: nvidiaModel,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3,
+            messages: cleanMessages,
+            temperature: 0.4,
             max_tokens: 8000
         };
         const resp = await httpsPostJSON('integrate.api.nvidia.com', '/v1/chat/completions', {
@@ -338,11 +328,8 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
     if (provider === 'deepseek') {
         const payload = {
             model: 'deepseek-chat',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3,
+            messages: cleanMessages,
+            temperature: 0.4,
             max_tokens: 8000
         };
         const resp = await httpsPostJSON('api.deepseek.com', '/chat/completions', {
@@ -356,7 +343,7 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         return { ok: false, statusCode: resp.statusCode, error: resp.data?.error?.message || 'Error en DeepSeek API' };
     }
 
-    // 7. OPENROUTER API (Con ajuste inteligente anti-402 y modelos :free de respaldo)
+    // 7. OPENROUTER API ({ model, messages, temperature: 0.4, max_tokens: 12000 })
     const modelToUse = (preferredModel && preferredModel !== 'auto') ? preferredModel : 'deepseek/deepseek-chat';
     const orHeaders = {
         'Authorization': `Bearer ${key}`,
@@ -365,25 +352,22 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
     };
     const payload = {
         model: modelToUse,
-        messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 8000
+        messages: cleanMessages,
+        temperature: 0.4,
+        max_tokens: 12000
     };
 
     let resp = await httpsPostJSON('openrouter.ai', '/api/v1/chat/completions', orHeaders, payload);
 
-    // Si devuelve 402 por límite de reserva de tokens, ajustar automáticamente y reintentar
+    // Si devuelve 402 por límite de reserva de tokens en la cuenta, ajustar automáticamente a lo permitido por OpenRouter
     if (resp.statusCode === 402) {
         const errMsg = resp.data?.error?.message || '';
         const affordMatch = errMsg.match(/can only afford\s+(\d+)/i);
         if (affordMatch && affordMatch[1]) {
             const affordableTokens = parseInt(affordMatch[1], 10);
-            if (affordableTokens > 1800) {
-                payload.max_tokens = Math.max(1800, affordableTokens - 150);
-                console.log(`[LoadBalancer] Ajustando max_tokens=${payload.max_tokens} en OpenRouter`);
+            if (affordableTokens > 1500) {
+                payload.max_tokens = Math.max(1500, affordableTokens - 100);
+                console.log(`[OpenRouter] Ajustando max_tokens=${payload.max_tokens} según saldo disponible`);
                 resp = await httpsPostJSON('openrouter.ai', '/api/v1/chat/completions', orHeaders, payload);
             }
         }
@@ -398,7 +382,7 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
         ];
         for (const fm of freeModels) {
             payload.model = fm;
-            payload.max_tokens = 8000;
+            payload.max_tokens = 12000;
             const freeResp = await httpsPostJSON('openrouter.ai', '/api/v1/chat/completions', orHeaders, payload);
             if (freeResp.statusCode >= 200 && freeResp.statusCode < 300) {
                 const text = freeResp.data?.choices?.[0]?.message?.content || '';
@@ -424,7 +408,7 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
 // ============================================================================
 // AUTO-CONTINUACIÓN INTELIGENTE SI UN OVA SUPERA EL LÍMITE DE TOKENS Y SE CORTA
 // ============================================================================
-async function ensureCompleteHtml(entry, systemPrompt, userPrompt, rawContent, preferredModel) {
+async function ensureCompleteHtml(entry, rawContent, preferredModel) {
     let cleaned = rawContent.replace(/```\s*$/, '').trim();
     const hasHtmlClose = /<\/html>/i.test(cleaned);
     const hasScriptOpen = /<script\b/i.test(cleaned);
@@ -436,15 +420,15 @@ async function ensureCompleteHtml(entry, systemPrompt, userPrompt, rawContent, p
 
     console.log(`[AutoContinue] Detectado HTML/Script truncado (${cleaned.length} bytes). Solicitando continuación automática a [${entry.provider.toUpperCase()}]...`);
     const tailContext = cleaned.slice(-1200);
-    const continuationPrompt = `El código HTML/JS del OVA anterior quedó cortado exactamente al final de este fragmento:\n\n${tailContext}\n\nINSTRUCCIÓN CRÍTICA: Continúa escribiendo ÚNICAMENTE el código faltante exactamente desde el último carácter donde se cortó, completando todas las funciones JavaScript pendientes, ejecutando la inicialización del juego (ej. initGame()) y cerrando con </script></body></html>. NO repitas el código ya escrito ni agregues explicaciones.`;
+    const continuationPrompt = `El código HTML/JS del OVA anterior quedó cortado exactamente al final de este fragmento:\n\n${tailContext}\n\nContinúa escribiendo ÚNICAMENTE el código faltante exactamente desde el último carácter donde se cortó hasta cerrar con </script></body></html>. NO repitas el código ya escrito ni agregues explicaciones.`;
 
-    const contResult = await callProvider(entry, systemPrompt, continuationPrompt, preferredModel);
+    const contMessages = [{ role: 'user', content: continuationPrompt }];
+    const contResult = await callProvider(entry, contMessages, continuationPrompt, preferredModel);
     if (contResult.ok && contResult.content) {
         let contText = contResult.content
             .replace(/^```(?:html|javascript|js)?\s*/i, '')
             .replace(/```\s*$/i, '');
 
-        // Evitar duplicación si el modelo repitió las últimas líneas del tailContext
         const lastLines = cleaned.split('\n').slice(-4).join('\n').trim();
         if (lastLines.length > 20 && contText.includes(lastLines)) {
             const idx = contText.indexOf(lastLines);
@@ -483,68 +467,56 @@ const server = http.createServer((req, res) => {
             providersCount[p.provider] = (providersCount[p.provider] || 0) + 1;
         });
         return sendJSON(res, 200, {
-            hasServerKey: pool.length > 0,
+            serverActive: true,
+            hasServerKey: Boolean(process.env.OPENROUTER_API_KEY) || pool.length > 0,
             totalKeysInPool: pool.length,
             providersCount,
             activeGlobalRequests,
             queuedRequests: requestQueue.length,
-            serverActive: true,
             promptsCount: promptsData.length
         });
     }
 
-    // Lista de las 20 plantillas de dinámicas
+    // Lista de las 21 plantillas de dinámicas
     if (pathname === '/api/prompts' && req.method === 'GET') {
         return sendJSON(res, 200, promptsData);
     }
 
-    // Endpoint de generación con Balanceo de Carga Inteligente y Auto-Failover
+    // Endpoint de generación con fidelidad 100% textual al prompt original
     if (pathname === '/api/generate' && req.method === 'POST') {
         let body = '';
         req.setEncoding('utf8');
         req.on('data', (chunk) => body += chunk);
         req.on('end', async () => {
-            const data = JSON.parse(body || '{}');
+            let data = {};
+            try {
+                data = JSON.parse(body || '{}');
+            } catch (parseErr) {
+                return sendJSON(res, 400, { error: 'JSON de solicitud inválido.' });
+            }
+
             const clientApiKey = data.apiKey || '';
             const pool = buildActiveKeyPool(clientApiKey);
 
             if (pool.length === 0) {
                 return sendJSON(res, 400, {
-                    error: 'No hay llaves API configuradas. Agrega llaves de Gemini, Groq, Mistral u OpenRouter en el botón "Configurar Clave" o en el servidor.'
+                    error: 'No hay llaves API configuradas. Agrega tu API Key en el botón "Configurar Clave" o en el servidor.'
                 });
             }
 
-            const model = data.model || 'auto';
-            const promptText = data.prompt;
+            const model = data.model || 'deepseek/deepseek-chat';
+            const messages = Array.isArray(data.messages) && data.messages.length > 0
+                ? data.messages
+                : (data.prompt ? [{ role: 'user', content: data.prompt }] : []);
+            const promptText = data.prompt || (messages[0] && messages[0].content) || '';
 
             if (!promptText) {
-                return sendJSON(res, 400, { error: 'El campo "prompt" es obligatorio.' });
+                return sendJSON(res, 400, { error: 'El prompt o array messages es obligatorio.' });
             }
-
-            const defaultSystemInstruction = `Actúa como un Desarrollador Web Front-End Senior y Diseñador Instruccional de clase mundial.
-Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado, cumpliendo con fidelidad ESTRICTA las especificaciones del prompt del usuario.
-
-ESTÁNDAR DE DISEÑO VISUAL OFFLINE Y RESPONSIVE OBLIGATORIO:
-El archivo HTML generado debe verse como una aplicación web moderna de alta gama sin depender de internet:
-- ESTILOS EMBEBIDOS: Todo el CSS dentro de <style>. Usa tipografía nativa: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif.
-- PALETA MODERNA: Fondo de página suave (#f8fafc), contenedores y tarjetas en blanco (#ffffff) con bordes suaves (1px solid #e2e8f0), radio de esquinas moderno (border-radius: 16px) y sombras sutiles (box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08)).
-- BOTONES Y ZONAS TÁCTILES: Botones con padding amplio, bordes redondeados (10px a 12px), altura mínima de 44px para dedos en móviles, con efectos activos suaves (transform: scale(0.98)).
-- CRUCIGRAMAS Y MATRICES: Los tableros deben usar CSS Grid compacto y centrado (max-width: 500px; margin: 0 auto;). Todas las celdas deben tener aspect-ratio: 1 y los inputs deben tener obligatoriamente: \`width: 100% !important; height: 100% !important; border: none !important; outline: none !important; background: transparent !important; text-align: center !important; font-weight: 800; font-size: clamp(14px, 3vw, 18px); padding: 0 !important; margin: 0 !important;\`.
-- SOPA DE LETRAS: Grid fluido con aspect-ratio: 1, selección táctil continua con pointerdown, pointermove (document.elementFromPoint) y pointerup.
-- CRONÓMETRO Y HUD: Barra superior visible con tiempo transcurrido (Meta: 10:00 min), puntaje y calificación (1.0 a 5.0).
-- ICONOS EN SVG: Cualquier icono visual debe ser código <svg> inline nativo.
-
-REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
-- CERO ALUCINACIONES EN ACERTIJOS Y CÓDIGOS: En Escape Room (4 salas secuenciales), cada acertijo debe plantear explícitamente los datos numéricos y la operación matemática cuyo resultado exacto sea el código de 3-4 dígitos validado en JavaScript.
-- FASE 3 VISIBLE (>500 PALABRAS): Incluye el artículo teórico profundo (>500 palabras reales) y las 10 actividades del Taller de Repaso basadas estrictamente en la lectura.
-- CSS COMPACTO Y <script> COMPLETO: Escribe las reglas CSS de forma compacta para garantizar que todo el bloque <script> y la llamada a initGame() lleguen hasta </script></body></html> sin cortarse. Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\`.`;
-
-            const effectiveSystemInstruction = data.systemPrompt || defaultSystemInstruction;
 
             await acquireConcurrencySlot(pool.length);
 
             try {
-                // Re-evaluar el orden del pool justo al momento de ejecutar para elegir la API más desocupada
                 const orderedPool = buildActiveKeyPool(clientApiKey);
                 let lastErrorMsg = 'Ningún proveedor pudo completar la solicitud.';
                 let lastStatus = 500;
@@ -555,11 +527,11 @@ REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
                     entry.state.totalCalls++;
 
                     try {
-                        console.log(`[LoadBalancer] Despachando generación a [${entry.provider.toUpperCase()}] (Activas en esta llave: ${entry.state.inFlight})`);
-                        const result = await callProvider(entry, effectiveSystemInstruction, promptText, model);
+                        console.log(`[LoadBalancer] Despachando generación a [${entry.provider.toUpperCase()}] (Activas: ${entry.state.inFlight})`);
+                        const result = await callProvider(entry, messages, promptText, model);
 
                         if (result.ok && result.content) {
-                            const finalContent = await ensureCompleteHtml(entry, effectiveSystemInstruction, promptText, result.content, model);
+                            const finalContent = await ensureCompleteHtml(entry, result.content, model);
                             return sendJSON(res, 200, {
                                 content: finalContent,
                                 modelUsed: result.modelUsed,
@@ -570,10 +542,9 @@ REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
                             lastStatus = result.statusCode || 500;
                             entry.state.errors++;
                             if (result.statusCode === 429 || result.statusCode === 402) {
-                                // Poner esta llave en enfriamiento por 25 segundos y pasar de inmediato a la siguiente llave libre
                                 entry.state.cooldownUntil = Date.now() + 25000;
                             }
-                            console.warn(`[LoadBalancer] Fallo en ${entry.provider} (${result.statusCode}): ${result.error}. Saltando a siguiente API del pool...`);
+                            console.warn(`[LoadBalancer] Fallo en ${entry.provider} (${result.statusCode}): ${result.error}. Saltando a siguiente API...`);
                         }
                     } catch (callErr) {
                         entry.state.errors++;
@@ -585,7 +556,7 @@ REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
                 }
 
                 return sendJSON(res, lastStatus, {
-                    error: `Todas las APIs del pool están ocupadas o sin cupo temporal. Último detalle: ${lastErrorMsg}`
+                    error: `Error al generar con la API: ${lastErrorMsg}`
                 });
             } catch (err) {
                 console.error('Error procesando /api/generate:', err);
@@ -636,8 +607,14 @@ REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
     });
 });
 
+// Timeout extendido a 4 minutos (240,000 ms) para evitar cortes HTTP 520/504 en generaciones extensas
+server.timeout = 240000;
+server.keepAliveTimeout = 240000;
+server.headersTimeout = 245000;
+
 server.listen(PORT, () => {
     const initialPool = buildActiveKeyPool();
-    console.log(`[teacherstools] Servidor Multi-API corriendo en el puerto ${PORT}`);
-    console.log(`[teacherstools] Llaves activas en el Pool de Balanceo: ${initialPool.length}`);
+    console.log(`[teacherstools] Servidor corriendo en el puerto ${PORT} (Timeout: 240s)`);
+    console.log(`[teacherstools] Plantillas originales cargadas: ${promptsData.length}`);
+    console.log(`[teacherstools] Llaves activas en el Pool: ${initialPool.length}`);
 });
