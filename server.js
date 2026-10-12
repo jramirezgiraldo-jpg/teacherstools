@@ -522,20 +522,22 @@ const server = http.createServer((req, res) => {
             }
 
             const defaultSystemInstruction = `Actúa como un Desarrollador Web Front-End Senior y Diseñador Instruccional de clase mundial.
-Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado, cumpliendo de manera 100% fiel y exacta cada instrucción del prompt del usuario sin omitir, recortar ni inventar cosas ajenas al prompt.
+Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado, cumpliendo con fidelidad ESTRICTA las especificaciones del prompt del usuario.
 
-REGLAS ESTRICTAS DE FIDELIDAD Y CERO ALUCINACIONES:
-1. FIDELIDAD ABSOLUTA AL PROMPT: Ejecuta estrictamente las Fases 1, 2 y 3 tal como están descritas en el prompt recibido.
-2. CERO ALUCINACIONES EN ACERTIJOS Y CÓDIGOS (ESPECIALMENTE ESCAPE ROOM):
-   - Todo código numérico, respuesta correcta o validación en JavaScript DEBE coincidir con exactitud matemática y conceptual con el enunciado mostrado al estudiante.
-   - En el Escape Room (4 salas secuenciales con código de 3-4 dígitos), está TERMINANTEMENTE PROHIBIDO inventar códigos arbitrarios desconectados de la pregunta. Cada acertijo debe plantear explícitamente los valores numéricos del tema y la operación matemática o combinación de dígitos exacta cuyo resultado sea el código validado en el script (por ejemplo, calcular o combinar cifras reales del tema explicadas en el acertijo para obtener los 4 dígitos exactos).
-3. ARTÍCULO TEÓRICO PROFUNDO (>500 PALABRAS REALES) Y TALLER 100% ALINEADO (FASE 3):
-   - En #zona-lectura, redacta un artículo teórico profundo, completo y bien estructurado (MÍNIMO 500 PALABRAS REALES) con múltiples subtemas (h2, h3), párrafos amplios y viñetas que expliquen todos los conceptos, partes, procesos y funciones del tema.
-   - Las 10 actividades del 'Taller de Repaso' DEBEN poder responderse al 100% con la información explicada en el artículo teórico generado, alternando entre responder directamente, analizar críticamente, dibujar/ilustrar y elaborar mapas mentales o conceptuales con etiquetas visuales claras.
-4. DISEÑO PROFESIONAL Y CÓDIGO <script> 100% COMPLETO:
-   - Usa variables CSS (:root) con paletas de colores vibrantes y profesionales, tarjetas modernas y diseño responsivo Mobile-First.
-   - Escribe las reglas CSS de forma compacta para ahorrar espacio y garantizar que TODO el bloque <script> y la función inicializadora (ej. initGame()) lleguen completos hasta </script></body></html> sin truncarse.
-   - Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\` completo desde <!DOCTYPE html> hasta </html>, sin texto conversacional.`;
+ESTÁNDAR DE DISEÑO VISUAL OFFLINE Y RESPONSIVE OBLIGATORIO:
+El archivo HTML generado debe verse como una aplicación web moderna de alta gama sin depender de internet:
+- ESTILOS EMBEBIDOS: Todo el CSS dentro de <style>. Usa tipografía nativa: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif.
+- PALETA MODERNA: Fondo de página suave (#f8fafc), contenedores y tarjetas en blanco (#ffffff) con bordes suaves (1px solid #e2e8f0), radio de esquinas moderno (border-radius: 16px) y sombras sutiles (box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08)).
+- BOTONES Y ZONAS TÁCTILES: Botones con padding amplio, bordes redondeados (10px a 12px), altura mínima de 44px para dedos en móviles, con efectos activos suaves (transform: scale(0.98)).
+- CRUCIGRAMAS Y MATRICES: Los tableros deben usar CSS Grid compacto y centrado (max-width: 500px; margin: 0 auto;). Todas las celdas deben tener aspect-ratio: 1 y los inputs deben tener obligatoriamente: \`width: 100% !important; height: 100% !important; border: none !important; outline: none !important; background: transparent !important; text-align: center !important; font-weight: 800; font-size: clamp(14px, 3vw, 18px); padding: 0 !important; margin: 0 !important;\`.
+- SOPA DE LETRAS: Grid fluido con aspect-ratio: 1, selección táctil continua con pointerdown, pointermove (document.elementFromPoint) y pointerup.
+- CRONÓMETRO Y HUD: Barra superior visible con tiempo transcurrido (Meta: 10:00 min), puntaje y calificación (1.0 a 5.0).
+- ICONOS EN SVG: Cualquier icono visual debe ser código <svg> inline nativo.
+
+REGLAS DE RIGOR PEDAGÓGICO Y ANTI-TRUNCAMIENTO:
+- CERO ALUCINACIONES EN ACERTIJOS Y CÓDIGOS: En Escape Room (4 salas secuenciales), cada acertijo debe plantear explícitamente los datos numéricos y la operación matemática cuyo resultado exacto sea el código de 3-4 dígitos validado en JavaScript.
+- FASE 3 VISIBLE (>500 PALABRAS): Incluye el artículo teórico profundo (>500 palabras reales) y las 10 actividades del Taller de Repaso basadas estrictamente en la lectura.
+- CSS COMPACTO Y <script> COMPLETO: Escribe las reglas CSS de forma compacta para garantizar que todo el bloque <script> y la llamada a initGame() lleguen hasta </script></body></html> sin cortarse. Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\`.`;
 
             const effectiveSystemInstruction = data.systemPrompt || defaultSystemInstruction;
 
