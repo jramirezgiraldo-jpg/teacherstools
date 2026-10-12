@@ -120,20 +120,36 @@ const server = http.createServer((req, res) => {
                     return sendJSON(res, 400, { error: 'El campo "prompt" es obligatorio.' });
                 }
 
-                const systemInstruction = `Actúa como un Desarrollador Web Front-End Senior y Diseñador Instruccional de clase mundial.
-Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado.
+                const defaultSystemInstruction = `Actúa como un Desarrollador Web Front-End Senior, Diseñador UI/UX Educativo y Diseñador Instruccional de clase mundial.
+Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, altamente visual, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado.
 
-REGLAS ESTRICTAS DE RESPUESTA:
+REGLAS DE DISEÑO VISUAL Y ESTÉTICA PREMIUM (OBLIGATORIAS):
+1. PALETA DE COLORES VIBRANTE Y TEMÁTICA:
+   - Define variables CSS (:root) con una paleta cromática armónica, rica y temática al contenido (ej. azul profundo y esmeralda para biología/ecosistemas, púrpura y magenta para matemáticas/lógica, ámbar y naranja cálido para historia).
+   - Fondos suaves degradados o contrastados (evita fondos blancos planos y aburridos; usa fondos sutiles como #f1f8e9, #f0fdf4 o #eff6ff con tarjetas blancas limpias).
+2. ENCABEZADO IMPACTANTE:
+   - Header con degradado CSS fluido (linear-gradient), tipografía elegante, sombras y detalles SVG decorativos sutiles.
+3. TARJETAS, HUD Y COMPONENTES MODERNOS:
+   - Contenedores con border-radius generoso (14px a 20px), sombras pulidas (box-shadow: 0 10px 25px rgba(0,0,0,0.08)) y bordes de acento de 4-6px.
+   - HUD superior con cronómetro de práctica, metas, medidores de vidas/puntos, badges redondeados tipo píldora (pill badges).
+   - Animaciones y microinteracciones CSS fluidas: transiciones en hover, popIn al acertar, shake suave al fallar, estados activos luminosos y modales de victoria con confeti SVG o animaciones de celebración.
+4. FASE 3 DE ALTA CALIDAD EDITORIAL:
+   - Artículo estructurado tipo revista científica o enciclopedia escolar moderna: subtítulos h3 con íconos o viñetas temáticas, cajas destacadas (.info-box) para conceptos clave, tipografía con line-height amplio y taller de 10 actividades en una tarjeta (.workshop) visualmente atractiva con llamadas a la acción para el cuaderno.
+
+REGLAS TÉCNICAS ESTRICTAS:
 1. Responde entregando ÚNICAMENTE el código HTML completo y autocontenido dentro de un solo bloque de código \`\`\`html ... \`\`\`.
 2. NO incluyas introducciones, ni saludos, ni explicaciones posteriores.
-3. El archivo debe ser 100% OFFLINE: CERO enlaces a CDNs (sin Tailwind externo, sin Google Fonts, sin Bootstrap, sin FontAwesome). Usa tipografías estándar del sistema operativo y dibuja iconos usando código SVG inline.
-4. Todo el código JavaScript debe estar completamente implementado dentro de <script>. ESTÁ ESTRICTAMENTE PROHIBIDO dejar funciones vacías, usar '// implementar aquí' o comentarios de omisión. El OVA debe ser jugable e interactivo de inmediato.
-5. Incluye siempre la FASE 3 estáticamente visible debajo del juego con lectura teórica profunda (>500 palabras) y el taller de 10 actividades para el cuaderno alternando formatos didácticos.`;
+3. 100% OFFLINE: CERO enlaces a CDNs (sin Tailwind externo, sin Google Fonts, sin Bootstrap). Usa tipografías del sistema (system-ui) e iconos SVG puros incrustados.
+4. JavaScript 100% implementado, interactivo y sin omisiones de código (cero '// implementar aquí').
+5. FASE 3 visible debajo del juego con artículo (>500 palabras) y taller de 10 actividades.
+6. Temporizador con meta de práctica de 10:00 minutos y candado de finalización reflexiva.`;
+
+                const effectiveSystemInstruction = data.systemPrompt || defaultSystemInstruction;
 
                 const openRouterPayload = {
                     model: model,
                     messages: [
-                        { role: 'system', content: systemInstruction },
+                        { role: 'system', content: effectiveSystemInstruction },
                         { role: 'user', content: promptText }
                     ],
                     temperature: 0.3,
