@@ -107,10 +107,10 @@
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition shadow-sm bg-slate-50/50 focus:bg-white">
                     </div>
 
-                    <!-- Selector de Dinámica OVA (21 Tipos) -->
+                    <!-- Selector de Dinámica OVA (20 Tipos) -->
                     <div>
                         <label for="select-dinamica" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Dinámica Gamificada OVA (21 Opciones) <span class="text-red-500">*</span>
+                            Dinámica Gamificada OVA (20 Opciones) <span class="text-red-500">*</span>
                         </label>
                         <select id="select-dinamica" onchange="updateDinamicaInfo()" 
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition shadow-sm bg-slate-50/50 focus:bg-white font-medium">
@@ -131,13 +131,13 @@
                     <!-- Selector de Modelo IA -->
                     <div class="pt-2 border-t border-slate-100">
                         <label for="select-model" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Modelo de Inteligencia Artificial
+                            Modelo de Inteligencia Artificial (OpenRouter)
                         </label>
                         <select id="select-model" 
-                                class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs outline-none bg-white">
-                            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Recomendado — Código Frontend Perfecto)</option>
-                            <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Alta capacidad analítica)</option>
-                            <option value="deepseek/deepseek-chat">DeepSeek Chat (Rápido y eficiente)</option>
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs outline-none bg-white font-medium">
+                            <option value="deepseek/deepseek-chat" selected>DeepSeek Chat (Predeterminado — Rápido, económico y 100% activo)</option>
+                            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Requiere saldo premium en OpenRouter)</option>
+                            <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Google)</option>
                             <option value="openai/gpt-4o">GPT-4o (OpenAI)</option>
                         </select>
                     </div>

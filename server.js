@@ -113,7 +113,7 @@ const server = http.createServer((req, res) => {
                     });
                 }
 
-                const model = data.model || 'anthropic/claude-3.5-sonnet';
+                const model = data.model || 'deepseek/deepseek-chat';
                 const promptText = data.prompt;
 
                 if (!promptText) {
