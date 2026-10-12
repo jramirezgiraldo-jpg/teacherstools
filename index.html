@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>teacherstools — Generador de OVAs Educativos Gamificados 100% Offline</title>
+    <!-- Tailwind CSS para el Generador (UI de administración docente) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- BARRA SUPERIOR -->
+    <header class="gradient-header text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-xl shadow-inner">
+                    🎓
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold tracking-tight">teacherstools</h1>
+                        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-400/20 border border-blue-300/30 text-blue-100">
+                            v1.0 Producción
+                        </span>
+                    </div>
+                    <p class="text-xs text-blue-100/80">Generador de Objetos Virtuales de Aprendizaje 100% Offline</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Indicador de Servidor / Clave -->
+                <div id="server-status-pill" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur border border-white/15 text-xs">
+                    <span id="server-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                    <span id="server-status-text" class="font-medium text-slate-200">Verificando servidor...</span>
+                </div>
+
+                <!-- Botón Configuración API Key -->
+                <button id="btn-toggle-config" onclick="toggleConfigModal()" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Configurar Clave</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL EN 2 COLUMNAS (FORMULARIO Y VISOR) -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- COLUMNA IZQUIERDA: FORMULARIO DEL GENERADOR (5 COLS) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</span>
+                        Parámetros Pedagógicos
+                    </h2>
+                    <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">Fase 3 Activa</span>
+                </div>
+
+                <form id="generator-form" onsubmit="handleGenerate(event)" class="space-y-4">
+                    <!-- Tema Curricular -->
+                    <div>
+                        <label for="input-tema" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Tema Curricular <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="input-tema" required placeholder="Ej: La Célula y sus Organelos, El Ciclo del Agua, Las Leyes de Newton..." 
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition shadow-sm bg-slate-50/50 focus:bg-white">
+                    </div>
+
+                    <!-- Grado / Nivel Educativo -->
+                    <div>
+                        <label for="input-grado" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Grado o Nivel Educativo <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="input-grado" required placeholder="Ej: Grado 7° de Secundaria, Primaria (4° y 5°), Bachillerato..." 
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition shadow-sm bg-slate-50/50 focus:bg-white">
+                    </div>
+
+                    <!-- Selector de Dinámica OVA (21 Tipos) -->
+                    <div>
+                        <label for="select-dinamica" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Dinámica Gamificada OVA (21 Opciones) <span class="text-red-500">*</span>
+                        </label>
+                        <select id="select-dinamica" onchange="updateDinamicaInfo()" 
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition shadow-sm bg-slate-50/50 focus:bg-white font-medium">
+                            <!-- Inyectado dinámicamente con las categorías -->
+                        </select>
+                        <p id="dinamica-desc" class="text-xs text-slate-500 mt-1.5 italic"></p>
+                    </div>
+
+                    <!-- Instrucciones o palabras clave adicionales (Opcional) -->
+                    <div>
+                        <label for="input-extra" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Palabras Clave o Instrucciones Extra <span class="text-slate-400 font-normal lowercase">(opcional)</span>
+                        </label>
+                        <textarea id="input-extra" rows="2" placeholder="Ej: Incluir mitocondria, ribosoma y cloroplasto; usar tono dinámico y accesible..." 
+                                  class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition shadow-sm bg-slate-50/50 focus:bg-white"></textarea>
+                    </div>
+
+                    <!-- Selector de Modelo IA -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <label for="select-model" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Modelo de Inteligencia Artificial
+                        </label>
+                        <select id="select-model" 
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs outline-none bg-white">
+                            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Recomendado — Código Frontend Perfecto)</option>
+                            <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Alta capacidad analítica)</option>
+                            <option value="deepseek/deepseek-chat">DeepSeek Chat (Rápido y eficiente)</option>
+                            <option value="openai/gpt-4o">GPT-4o (OpenAI)</option>
+                        </select>
+                    </div>
+
+                    <!-- Botón Generar OVA -->
+                    <div class="pt-2">
+                        <button type="submit" id="btn-generate" 
+                                class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm tracking-wide shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 group">
+                            <span id="btn-generate-icon">⚡</span>
+                            <span id="btn-generate-text">Generar OVA Interactivo</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- GARANTÍAS PEDAGÓGICAS Y TÉCNICAS -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50/60 rounded-2xl p-5 border border-blue-100 text-xs text-blue-900 space-y-2.5">
+                <div class="font-bold text-blue-950 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Estándares Estrictos Incorporados:
+                </div>
+                <ul class="space-y-1.5 list-disc list-inside text-blue-800/90 pl-1">
+                    <li><strong>100% OFFLINE:</strong> Cero CDNs, tipografía nativa del sistema, iconos SVG inline y Web Audio/Speech puros.</li>
+                    <li><strong>Fase 3 Visible:</strong> Artículo teórico (>500 palabras) y Taller de 10 actividades para el cuaderno.</li>
+                    <li><strong>Móvil y Pantallas Táctiles:</strong> Viewport protegido con <code class="bg-blue-200/50 px-1 py-0.5 rounded">touch-action: none</code> y tipografía fluida <code class="bg-blue-200/50 px-1 py-0.5 rounded">clamp()</code>.</li>
+                </ul>
+            </div>
+
+            <!-- HISTORIAL DE LA SESIÓN -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>🕒</span> Historial de la Sesión
+                    </h3>
+                    <button onclick="clearHistory()" class="text-[11px] text-slate-400 hover:text-red-600 transition">Limpiar</button>
+                </div>
+                <div id="history-list" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar text-xs">
+                    <p class="text-slate-400 italic py-2 text-center">No hay OVAs generados aún en esta sesión.</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- COLUMNA DERECHA: VISOR EN VIVO Y DESCARGA (7 COLS) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col flex-grow min-h-[640px]">
+                
+                <!-- Barra de Acciones del Visor -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <span id="preview-title" class="font-bold text-slate-800 text-sm">Vista Previa del OVA</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <!-- Copiar Código HTML -->
+                        <button id="btn-copy-code" onclick="copyGeneratedCode()" disabled 
+                                class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            <span>Copiar Código</span>
+                        </button>
+
+                        <!-- Pantalla Completa -->
+                        <button id="btn-fullscreen" onclick="openFullscreenPreview()" disabled 
+                                class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                            <span>Pantalla Completa</span>
+                        </button>
+
+                        <!-- Descargar OVA (.html) -->
+                        <button id="btn-download" onclick="downloadCurrentOva()" disabled 
+                                class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>Descargar OVA (.html)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Visor / Iframe -->
+                <div class="relative flex-grow rounded-xl overflow-hidden bg-slate-900 border border-slate-200 mt-3 flex items-center justify-center">
+                    
+                    <!-- Estado Inicial / Vacío -->
+                    <div id="preview-placeholder" class="text-center p-8 max-w-sm">
+                        <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-3xl mb-3 shadow-inner">
+                            🎯
+                        </div>
+                        <h4 class="text-white font-bold text-base mb-1">Visor Interactivo en Espera</h4>
+                        <p class="text-slate-400 text-xs leading-relaxed">
+                            Completa el formulario y pulsa <strong>"Generar OVA Interactivo"</strong>. Podrás probar la dinámica y descargar el archivo HTML autocontenido de inmediato.
+                        </p>
+                    </div>
+
+                    <!-- Estado de Carga / Spinner -->
+                    <div id="preview-loading" class="hidden absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
+                        <div class="w-12 h-12 border-4 border-blue-400/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                        <h4 class="text-white font-bold text-sm mb-1" id="loading-stage-text">Construyendo OVA Educativo...</h4>
+                        <p class="text-slate-400 text-xs max-w-xs" id="loading-subtext">Diseñando interactivo 100% offline y ensamblando Fase 3 con lectura teórica y taller para el cuaderno.</p>
+                    </div>
+
+                    <!-- Iframe Sandbox para Seguridad y Prueba -->
+                    <iframe id="preview-frame" class="w-full h-full border-0 bg-white hidden" 
+                            sandbox="allow-scripts allow-forms allow-modals allow-same-origin"></iframe>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 text-center py-4 text-xs text-slate-500">
+        <p><strong>teacherstools</strong> &copy; 2026 — Plataforma libre para docentes. Diseñado para funcionar 100% Offline en escuelas y colegios.</p>
+    </footer>
+
+    <!-- MODAL DE CONFIGURACIÓN DE OPENROUTER API KEY -->
+    <div id="modal-config" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                    🔑 Configuración de OpenRouter
+                </h3>
+                <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div id="modal-server-info" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+                    <!-- Información de servidor inyectada por JS -->
+                </div>
+
+                <div>
+                    <label for="input-api-key" class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                        Tu API Key de OpenRouter (Personal)
+                    </label>
+                    <input type="password" id="input-api-key" placeholder="sk-or-v1-..." 
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs outline-none font-mono">
+                    <p class="text-[11px] text-slate-500 mt-1">
+                        Se guardará en tu navegador (<code class="bg-slate-100 px-1 py-0.5 rounded">localStorage</code>) para tus consultas si el servidor no tiene clave predeterminada.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+                <button onclick="toggleConfigModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold text-xs transition">
+                    Cerrar
+                </button>
+                <button onclick="saveApiKey()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow transition">
+                    Guardar Clave
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST DE NOTIFICACIONES -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs font-medium border border-slate-700">
+        <span id="toast-icon">ℹ️</span>
+        <span id="toast-message">Mensaje</span>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL
+        let promptsList = [];
+        let serverConfig = { hasServerKey: false, serverActive: false };
+        let currentGeneratedHtml = '';
+        let currentOvaMetadata = null;
+        let sessionHistory = [];
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadStoredApiKey();
+            await checkServerConfig();
+            await loadPrompts();
+            renderSessionHistory();
+        });
+
+        // VERIFICAR CONFIGURACIÓN DEL SERVIDOR
+        async function checkServerConfig() {
+            const statusDot = document.getElementById('server-status-dot');
+            const statusText = document.getElementById('server-status-text');
+            try {
+                const res = await fetch('/api/config');
+                if (res.ok) {
+                    serverConfig = await res.json();
+                    if (serverConfig.hasServerKey) {
+                        statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
+                        statusText.textContent = "Servidor con Clave Activa";
+                    } else {
+                        statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                        statusText.textContent = "Sin Clave en Servidor (Usa Personal)";
+                    }
+                } else {
+                    throw new Error('Servidor no respondió');
+                }
+            } catch (err) {
+                serverConfig = { hasServerKey: false, serverActive: false };
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-rose-400";
+                statusText.textContent = "Modo Cliente Autónomo";
+            }
+        }
+
+        // CARGAR PROMPTS DESDE EL SERVIDOR (O FALLBACK LOCAL)
+        async function loadPrompts() {
+            try {
+                const res = await fetch('/api/prompts');
+                if (res.ok) {
+                    promptsList = await res.json();
+                } else {
+                    throw new Error('No se pudo cargar desde /api/prompts');
+                }
+            } catch (err) {
+                console.warn('Cargando prompts desde json estático:', err);
+                try {
+                    const fallbackRes = await fetch('prompts_data.json');
+                    promptsList = await fallbackRes.json();
+                } catch (e) {
+                    console.error('Error total cargando prompts:', e);
+                }
+            }
+            populatePromptsSelect();
+        }
+
+        // LLENAR SELECTOR ORGANIZADO POR CATEGORÍAS
+        function populatePromptsSelect() {
+            const select = document.getElementById('select-dinamica');
+            select.innerHTML = '';
+
+            // Agrupar por categoría
+            const grouped = {};
+            promptsList.forEach(p => {
+                if (!grouped[p.category]) grouped[p.category] = [];
+                grouped[p.category].push(p);
+            });
+
+            for (const [catName, items] of Object.entries(grouped)) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = `📂 ${catName}`;
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.title;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
+
+            updateDinamicaInfo();
+        }
+
+        // MOSTRAR DESCRIPCIÓN DE LA DINÁMICA SELECCIONADA
+        function updateDinamicaInfo() {
+            const selectedId = parseInt(document.getElementById('select-dinamica').value);
+            const dinamica = promptsList.find(p => p.id === selectedId);
+            const descEl = document.getElementById('dinamica-desc');
+            if (dinamica && descEl) {
+                descEl.textContent = dinamica.description;
+            }
+        }
+
+        // GESTIÓN DE API KEY EN LOCALSTORAGE
+        function loadStoredApiKey() {
+            const stored = localStorage.getItem('teacherstools_openrouter_key');
+            if (stored) {
+                document.getElementById('input-api-key').value = stored;
+            }
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('input-api-key').value.trim();
+            if (key) {
+                localStorage.setItem('teacherstools_openrouter_key', key);
+                showToast('API Key guardada en tu navegador', '🔑');
+            } else {
+                localStorage.removeItem('teacherstools_openrouter_key');
+                showToast('Clave eliminada de tu navegador', '🗑️');
+            }
+            toggleConfigModal();
+        }
+
+        function toggleConfigModal() {
+            const modal = document.getElementById('modal-config');
+            const infoEl = document.getElementById('modal-server-info');
+            const isHidden = modal.classList.contains('hidden');
+
+            if (isHidden) {
+                modal.classList.remove('hidden');
+                if (serverConfig.hasServerKey) {
+                    infoEl.innerHTML = `
+                        <p class="text-emerald-700 font-semibold mb-1">🟢 Clave de Servidor Detectada</p>
+                        <p>El backend de Render tiene configurada la variable <code>OPENROUTER_API_KEY</code>. Puedes generar sin ingresar una clave personal, o colocar una abajo para anularla temporalmente.</p>
+                    `;
+                } else {
+                    infoEl.innerHTML = `
+                        <p class="text-amber-700 font-semibold mb-1">🟡 Sin Clave Global en Servidor</p>
+                        <p>Para generar OVAs ingresa tu propia clave de OpenRouter (comienza con <code>sk-or-v1-...</code>). Quedará guardada localmente en tu navegador de forma segura.</p>
+                    `;
+                }
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // CONSTRUCCIÓN DEL PROMPT FINAL
+        function buildFinalPrompt(template, tema, grado, extra) {
+            let prompt = template
+                .replace(/\{\{TEMA\}\}/g, tema)
+                .replace(/\{\{GRADO\}\}/g, grado);
+
+            if (extra && extra.trim().length > 0) {
+                prompt += `\n\nINDICACIONES Y PALABRAS CLAVE OBLIGATORIAS ADICIONALES SUMINISTRADAS POR EL DOCENTE:\n${extra.trim()}`;
+            }
+
+            return prompt;
+        }
+
+        // LIMPIEZA DEL HTML DEVUELTO POR EL LLM
+        function extractCleanHtml(rawContent) {
+            if (!rawContent) return '';
+            
+            // Buscar bloque ```html ... ```
+            const match = rawContent.match(/```html\s*([\s\S]*?)\s*```/i);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+
+            // Si vino con ``` ... ``` sin especificar html
+            const genericMatch = rawContent.match(/```\s*([\s\S]*?)\s*```/);
+            if (genericMatch && genericMatch[1] && genericMatch[1].includes('<!DOCTYPE') || (genericMatch && genericMatch[1] && genericMatch[1].includes('<html'))) {
+                return genericMatch[1].trim();
+            }
+
+            // Si vino directamente el código HTML con <!DOCTYPE html>
+            const docTypeIndex = rawContent.indexOf('<!DOCTYPE');
+            if (docTypeIndex !== -1) {
+                const htmlEndIndex = rawContent.lastIndexOf('</html>');
+                if (htmlEndIndex !== -1) {
+                    return rawContent.substring(docTypeIndex, htmlEndIndex + 7).trim();
+                }
+                return rawContent.substring(docTypeIndex).trim();
+            }
+
+            return rawContent.trim();
+        }
+
+        // MANEJO DE LA GENERACIÓN
+        async function handleGenerate(e) {
+            e.preventDefault();
+
+            const tema = document.getElementById('input-tema').value.trim();
+            const grado = document.getElementById('input-grado').value.trim();
+            const dinamicaId = parseInt(document.getElementById('select-dinamica').value);
+            const extra = document.getElementById('input-extra').value.trim();
+            const model = document.getElementById('select-model').value;
+            const personalKey = localStorage.getItem('teacherstools_openrouter_key') || '';
+
+            if (!tema || !grado) {
+                showToast('Por favor completa Tema y Grado.', '⚠️');
+                return;
+            }
+
+            const dinamica = promptsList.find(p => p.id === dinamicaId);
+            if (!dinamica) {
+                showToast('Dinámica no encontrada.', '⚠️');
+                return;
+            }
+
+            // Validar clave disponible
+            if (!serverConfig.hasServerKey && !personalKey) {
+                toggleConfigModal();
+                showToast('Ingresa tu API Key de OpenRouter para continuar.', '🔑');
+                return;
+            }
+
+            // Preparar UI
+            setGeneratingState(true);
+            const finalPrompt = buildFinalPrompt(dinamica.template, tema, grado, extra);
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: finalPrompt,
+                        model: model,
+                        apiKey: personalKey
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Error al generar el recurso.');
+                }
+
+                const cleanHtml = extractCleanHtml(data.content);
+                if (!cleanHtml || cleanHtml.length < 100) {
+                    throw new Error('La respuesta recibida no contiene código HTML válido.');
+                }
+
+                // Guardar y renderizar
+                currentGeneratedHtml = cleanHtml;
+                currentOvaMetadata = {
+                    id: Date.now(),
+                    tema,
+                    grado,
+                    dinamicaTitle: dinamica.title,
+                    html: cleanHtml,
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+
+                displayPreview(cleanHtml, dinamica.title, tema);
+                addToHistory(currentOvaMetadata);
+                showToast('¡OVA generado exitosamente!', '🎉');
+
+            } catch (err) {
+                console.error('Error generando OVA:', err);
+                showToast(err.message, '❌');
+            } finally {
+                setGeneratingState(false);
+            }
+        }
+
+        // ESTADO DE CARGA EN LA UI
+        function setGeneratingState(isGenerating) {
+            const btn = document.getElementById('btn-generate');
+            const btnText = document.getElementById('btn-generate-text');
+            const btnIcon = document.getElementById('btn-generate-icon');
+            const previewLoading = document.getElementById('preview-loading');
+
+            if (isGenerating) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                btnIcon.innerHTML = `<svg class="w-4 h-4 animate-spin inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+                btnText.textContent = "Programando OVA...";
+                previewLoading.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btnIcon.innerHTML = "⚡";
+                btnText.textContent = "Generar OVA Interactivo";
+                previewLoading.classList.add('hidden');
+            }
+        }
+
+        // RENDERIZAR EN EL VISOR IFRAME
+        function displayPreview(html, dinamicaTitle, tema) {
+            const placeholder = document.getElementById('preview-placeholder');
+            const iframe = document.getElementById('preview-frame');
+            const titleEl = document.getElementById('preview-title');
+            const btnCopy = document.getElementById('btn-copy-code');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const btnDownload = document.getElementById('btn-download');
+
+            placeholder.classList.add('hidden');
+            iframe.classList.remove('hidden');
+
+            titleEl.textContent = `${dinamicaTitle} — ${tema}`;
+            btnCopy.disabled = false;
+            btnFullscreen.disabled = false;
+            btnDownload.disabled = false;
+
+            // Inyectar en el iframe de manera segura con blob URL
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            iframe.src = URL.createObjectURL(blob);
+        }
+
+        // DESCARGA DIRECTA DEL ARCHIVO .HTML
+        function downloadCurrentOva() {
+            if (!currentGeneratedHtml) return;
+            const filename = `OVA_${sanitizeFilename(currentOvaMetadata?.tema || 'recurso')}_${sanitizeFilename(currentOvaMetadata?.dinamicaTitle || 'actividad')}.html`;
+            
+            const blob = new Blob([currentGeneratedHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Archivo descargado listo para usar offline', '💾');
+        }
+
+        // COPIAR CÓDIGO
+        async function copyGeneratedCode() {
+            if (!currentGeneratedHtml) return;
+            try {
+                await navigator.clipboard.writeText(currentGeneratedHtml);
+                showToast('Código HTML copiado al portapapeles', '📋');
+            } catch (err) {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = currentGeneratedHtml;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('Código HTML copiado al portapapeles', '📋');
+            }
+        }
+
+        // PANTALLA COMPLETA EN NUEVA PESTAÑA
+        function openFullscreenPreview() {
+            if (!currentGeneratedHtml) return;
+            const blob = new Blob([currentGeneratedHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+
+        // HISTORIAL DE SESIÓN
+        function addToHistory(item) {
+            sessionHistory.unshift(item);
+            if (sessionHistory.length > 10) sessionHistory.pop();
+            renderSessionHistory();
+        }
+
+        function renderSessionHistory() {
+            const list = document.getElementById('history-list');
+            if (sessionHistory.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 italic py-2 text-center">No hay OVAs generados aún en esta sesión.</p>`;
+                return;
+            }
+
+            list.innerHTML = '';
+            sessionHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "p-2.5 rounded-xl border border-slate-100 hover:border-blue-200 bg-slate-50/50 hover:bg-white transition flex items-center justify-between gap-2";
+                div.innerHTML = `
+                    <div class="truncate">
+                        <p class="font-bold text-slate-800 truncate">${item.tema}</p>
+                        <p class="text-[11px] text-slate-500">${item.dinamicaTitle} • ${item.timestamp}</p>
+                    </div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button onclick="reloadFromHistory(${item.id})" class="px-2 py-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold text-[11px]">Ver</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function reloadFromHistory(id) {
+            const item = sessionHistory.find(i => i.id === id);
+            if (!item) return;
+            currentGeneratedHtml = item.html;
+            currentOvaMetadata = item;
+            displayPreview(item.html, item.dinamicaTitle, item.tema);
+            showToast('OVA cargado en el visor', '👁️');
+        }
+
+        function clearHistory() {
+            sessionHistory = [];
+            renderSessionHistory();
+            showToast('Historial limpiado', '🧹');
+        }
+
+        function sanitizeFilename(str) {
+            return str.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30);
+        }
+
+        // TOAST NOTIFIER
+        function showToast(message, icon = 'ℹ️') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.textContent = message;
+            iconEl.textContent = icon;
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "teacherstools",
+  "version": "1.0.0",
+  "description": "Suite y generador profesional de Objetos Virtuales de Aprendizaje (OVAs) gamificados 100% offline para docentes con OpenRouter",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "education",
+    "gamification",
+    "openrouter",
+    "offline-first",
+    "teachers",
+    "interactive-ova"
+  ],
+  "author": "Juan Felipe Ramirez Giraldo",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: teacherstools
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
