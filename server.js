@@ -153,7 +153,7 @@ REGLAS TÉCNICAS ESTRICTAS:
                         { role: 'user', content: promptText }
                     ],
                     temperature: 0.3,
-                    max_tokens: 16000
+                    max_tokens: 8000
                 };
 
                 const response = await callOpenRouter(effectiveKey, openRouterPayload);
