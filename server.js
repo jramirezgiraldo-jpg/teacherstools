@@ -223,7 +223,7 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
             const payload = {
                 contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
                 generationConfig: {
-                    temperature: 0.4,
+                    temperature: 0.3,
                     maxOutputTokens: 8192
                 }
             };
@@ -250,8 +250,8 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
         const payload = {
             model: groqModel,
             messages: cleanMessages,
-            temperature: 0.4,
-            max_tokens: 8000
+            temperature: 0.3,
+            max_tokens: 16000
         };
         const resp = await httpsPostJSON('api.groq.com', '/openai/v1/chat/completions', {
             'Authorization': `Bearer ${key}`
@@ -270,8 +270,8 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
         const payload = {
             model: mistralModel,
             messages: cleanMessages,
-            temperature: 0.4,
-            max_tokens: 12000
+            temperature: 0.3,
+            max_tokens: 16000
         };
         const resp = await httpsPostJSON('api.mistral.ai', '/v1/chat/completions', {
             'Authorization': `Bearer ${key}`
@@ -290,8 +290,8 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
         const payload = {
             model: cerebrasModel,
             messages: cleanMessages,
-            temperature: 0.4,
-            max_tokens: 8000
+            temperature: 0.3,
+            max_tokens: 16000
         };
         const resp = await httpsPostJSON('api.cerebras.ai', '/v1/chat/completions', {
             'Authorization': `Bearer ${key}`
@@ -310,8 +310,8 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
         const payload = {
             model: nvidiaModel,
             messages: cleanMessages,
-            temperature: 0.4,
-            max_tokens: 8000
+            temperature: 0.3,
+            max_tokens: 16000
         };
         const resp = await httpsPostJSON('integrate.api.nvidia.com', '/v1/chat/completions', {
             'Authorization': `Bearer ${key}`
@@ -329,8 +329,8 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
         const payload = {
             model: 'deepseek-chat',
             messages: cleanMessages,
-            temperature: 0.4,
-            max_tokens: 8000
+            temperature: 0.3,
+            max_tokens: 16000
         };
         const resp = await httpsPostJSON('api.deepseek.com', '/chat/completions', {
             'Authorization': `Bearer ${key}`
@@ -343,7 +343,7 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
         return { ok: false, statusCode: resp.statusCode, error: resp.data?.error?.message || 'Error en DeepSeek API' };
     }
 
-    // 7. OPENROUTER API ({ model, messages, temperature: 0.4, max_tokens: 12000 })
+    // 7. OPENROUTER API ({ model, messages, temperature: 0.3, max_tokens: 16000 })
     const modelToUse = (preferredModel && preferredModel !== 'auto') ? preferredModel : 'deepseek/deepseek-chat';
     const orHeaders = {
         'Authorization': `Bearer ${key}`,
@@ -353,8 +353,8 @@ async function callProvider(entry, messagesArray, userPrompt, preferredModel) {
     const payload = {
         model: modelToUse,
         messages: cleanMessages,
-        temperature: 0.4,
-        max_tokens: 12000
+        temperature: 0.3,
+        max_tokens: 16000
     };
 
     let resp = await httpsPostJSON('openrouter.ai', '/api/v1/chat/completions', orHeaders, payload);

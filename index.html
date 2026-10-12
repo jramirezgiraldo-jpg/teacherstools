@@ -449,132 +449,9 @@
             }
         }
 
-        // DIRECTIVA OBLIGATORIA PARA LA FASE 3 (ARTÍCULO TEÓRICO EN 4 SECCIONES >500 PALABRAS + TALLER CON TARJETAS DE COLORES)
-        const mandatoryPhase3Spec = `FASE 3: ARTÍCULO TEÓRICO RIGUROSO (MÍNIMO 500 PALABRAS REALES) Y TALLER ANCLADO:
-La sección pedagógica ubicada debajo del juego interactivo (<section id="zona-lectura"><div class="article-container">...</div></section>) es OBLIGATORIA, SIEMPRE VISIBLE y DEBE cumplir estrictamente con los siguientes estándares de profundidad y diseño visual:
-
-1. ESTRUCTURA OBLIGATORIA DEL ARTÍCULO TEÓRICO (MÍNIMO 500 PALABRAS):
-   ESTRICTAMENTE PROHIBIDO resumir el tema en 2 párrafos breves o listas esquemáticas. El texto debe ser un artículo educativo profundo, redactado en prosa fluida y dividido en 4 secciones obligatorias:
-   - <h2>Título del Tema Curricular</h2>
-   - <h3>1. Fundamentos Conceptuales y Principios Clave</h3>: Mínimo 2 párrafos profundos explicando la definición, contexto, etimología e importancia general del tema.
-   - <h3>2. Estructura, Procesos y Mecanismos Detallados</h3>: Mínimo 3 párrafos técnicos explicando paso a paso cómo funciona el fenómeno, sus etapas, partes u órganos involucrados, interacciones y fórmulas/leyes asociadas.
-   - <h3>3. Aplicación en la Vida Real, Salud o Ecosistemas</h3>: Mínimo 2 párrafos analizando su relevancia en el mundo real, repercusiones cotidianas y fenómenos observables.
-   - <h3>4. Factores de Riesgo, Desequilibrios y Análisis de Casos</h3>: Mínimo 2 párrafos discutiendo qué ocurre cuando el sistema falla o se altera, aportando ejemplos concretos.
-   (La suma de estas 4 secciones DEBE superar las 500 palabras reales de contenido formativo de alto nivel).
-
-2. TALLER DE REPASO DE 10 ACTIVIDADES (ESTRICTA CORRESPONDENCIA TEXTUAL):
-   - Encabezado destacado: 'Escribe y resuelve estas actividades en tu cuaderno'.
-   - REGLA DE ORO DE CORRESPONDENCIA: Cada una de las 10 preguntas DEBE poder responderse, justificarse o deducirse DIRECTAMENTE a partir de los datos, explicaciones y conceptos desarrollados en el artículo teórico anterior. CERO preguntas que requieran buscar en internet.
-   - Alternancia obligatoria de formatos en las 10 preguntas:
-     * 3 Preguntas de respuesta directa y conceptualización (.type-responder).
-     * 3 Preguntas de análisis crítico y resolución de situaciones problema (.type-analizar).
-     * 2 Actividades de dibujo técnico, rotulado o esquemas visuales (.type-dibujar).
-     * 2 Actividades de síntesis: mapa mental, mapa conceptual o cuadro comparativo (.type-mapa).
-
----
-REGLA VISUAL ESTRICTA PARA EL TALLER DE LA FASE 3:
-
-1. CSS OBLIGATORIO PARA EL TALLER (Incluir dentro de <style>):
-.workshop-section {
-    margin-top: 50px;
-    border-top: 3px dashed #cbd5e1;
-    padding-top: 35px;
-}
-.workshop-header {
-    background: #15803d;
-    color: #ffffff;
-    padding: 18px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.3rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.instruction-alert {
-    background: #fef2f2;
-    color: #b91c1c;
-    padding: 15px 20px;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 1.05rem;
-    font-weight: bold;
-    margin-bottom: 25px;
-    border: 2px solid #fecaca;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.activity-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 22px 25px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.03);
-}
-.activity-card::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 8px;
-}
-.type-responder::before { background-color: #3b82f6; }
-.type-analizar::before { background-color: #f59e0b; }
-.type-dibujar::before { background-color: #8b5cf6; }
-.type-mapa::before { background-color: #10b981; }
-
-.type-label {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    font-weight: 800;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.type-responder .type-label { color: #3b82f6; }
-.type-analizar .type-label { color: #f59e0b; }
-.type-dibujar .type-label { color: #8b5cf6; }
-.type-mapa .type-label { color: #10b981; }
-
-.activity-text {
-    font-size: 1.1rem;
-    color: #334155;
-    line-height: 1.6;
-}
-
-2. ESTRUCTURA HTML OBLIGATORIA PARA LAS 10 TARJETAS DEL TALLER:
-Dentro de <div class="workshop-section">, genera <div class="workshop-header">TALLER DE REPASO Y APLICACIÓN</div>, luego <div class="instruction-alert">INSTRUCCIÓN: Escribe, desarrolla y resuelve de forma completa cada una de las siguientes 10 actividades en tu cuaderno.</div> y exactamente las 10 tarjetas usando esta estructura con su ícono SVG inline correspondiente:
-- Para las 3 de Responder Directamente:
-  <div class="activity-card type-responder"><div class="type-label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> N. Responder Directamente</div><div class="activity-text">...</div></div>
-- Para las 3 de Analizar Críticamente:
-  <div class="activity-card type-analizar"><div class="type-label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> N. Analizar Críticamente</div><div class="activity-text">...</div></div>
-- Para las 2 de Dibujar / Ilustrar:
-  <div class="activity-card type-dibujar"><div class="type-label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> N. Dibujar / Ilustrar</div><div class="activity-text">...</div></div>
-- Para las 2 de Mapa Conceptual / Cuadro Comparativo:
-  <div class="activity-card type-mapa"><div class="type-label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> N. Mapa Conceptual / Cuadro Comparativo</div><div class="activity-text">...</div></div>`;
-
-        // REGLA SUPREMA DE DESARROLLO (ESTRICTA, OBLIGATORIA Y PENALIZADA)
-        const supremeDevRule = `REGLA SUPREMA DE DESARROLLO (ESTRICTA, OBLIGATORIA Y PENALIZADA):
-1. EL CÓDIGO JAVASCRIPT DEL JUEGO ES LA PRIORIDAD #1:
-   Debes escribir TODO el código JavaScript completo y 100% funcional dentro de <script>.
-   ESTÁ TERMINANTEMENTE PROHIBIDO usar comentarios como '// Aquí iría el código', '// TODO', '// implementar lógica', o dejar funciones vacías. Si el juego no es 100% interactivo y jugable desde el segundo cero (con eventos táctiles, clics, cronómetro, validación y modal de victoria), EL ARCHIVO SERÁ CONSIDERADO INVÁLIDO.
-2. ORDEN DE CONSTRUCCIÓN OBLIGATORIO:
-   - Primero: CSS responsive embebido (con clases para el juego y para el taller: .type-responder, .type-analizar, .type-dibujar, .type-mapa).
-   - Segundo: Contenedor HTML del juego interactivo.
-   - Tercero: Código JavaScript completo y sin omisiones dentro de <script>.
-   - Cuarto: <section id='zona-lectura'> con artículo teórico inductivo profundo (>500 palabras reales).
-   - Quinto: Taller de 10 actividades en tarjetas individuales con sus clases (.type-responder en azul, .type-analizar en naranja, .type-dibujar en púrpura y .type-mapa en verde).
-3. FORMATO DE ENTREGA: Entrega ÚNICAMENTE el archivo HTML completo y autocontenido dentro de un solo bloque de código (\`\`\`html ... \`\`\`), sin texto conversacional previo ni explicaciones posteriores.`;
-
         // CONSTRUCCIÓN DEL PROMPT FINAL
         function buildFinalPrompt(dinamica, temaUsuario, gradoUsuario) {
-            let prompt = String(dinamica.content || dinamica.template || '');
+            let prompt = String(dinamica.template || dinamica.content || '');
 
             if (dinamica.id >= 1 && dinamica.id <= 19) {
                 prompt = prompt
@@ -588,20 +465,6 @@ Dentro de <div class="workshop-section">, genera <div class="workshop-header">TA
                 prompt = prompt
                     .replace(/^TEMA CURRICULAR:\s*\[.*?\]/m, `TEMA CURRICULAR: [${temaUsuario}]`)
                     .replace(/^(POBLACIÓN OBJETIVO:.*)$/m, `$1 (Grado: ${gradoUsuario})`);
-            }
-
-            // Garantizar que la especificación de Fase 3 tenga la estructura obligatoria de 4 secciones (>500 palabras) y tarjetas de taller a color
-            const legacyPhase3Regex = /FASE 3: LECTURA TEÓRICA Y TALLER DE REPASO[\s\S]*?encaje perfectamente en móviles\./;
-            if (legacyPhase3Regex.test(prompt)) {
-                prompt = prompt.replace(legacyPhase3Regex, mandatoryPhase3Spec);
-            }
-
-            // Garantizar que la REGLA SUPREMA DE DESARROLLO esté presente y actualizada
-            const legacyRuleRegex = /REGLA SUPREMA DE GENERACIÓN Y DESARROLLO[\s\S]*$/;
-            if (legacyRuleRegex.test(prompt)) {
-                prompt = prompt.replace(legacyRuleRegex, supremeDevRule);
-            } else if (!prompt.includes('REGLA SUPREMA DE DESARROLLO (ESTRICTA, OBLIGATORIA Y PENALIZADA):')) {
-                prompt = prompt.trim() + '\n\n' + supremeDevRule;
             }
 
             return prompt;
