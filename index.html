@@ -260,12 +260,12 @@
         <p><strong>teacherstools</strong> &copy; 2026 — Plataforma libre para docentes. Diseñado para funcionar 100% Offline en escuelas y colegios.</p>
     </footer>
 
-    <!-- MODAL DE CONFIGURACIÓN DE OPENROUTER API KEY -->
+    <!-- MODAL DE CONFIGURACIÓN MULTI-API -->
     <div id="modal-config" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                 <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                    🔑 Configuración de OpenRouter
+                    🔑 Pool Multi-API Inteligente
                 </h3>
                 <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
             </div>
@@ -277,12 +277,12 @@
 
                 <div>
                     <label for="input-api-key" class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                        Tu API Key de OpenRouter (Personal)
+                        Tus Llaves API Adicionales (Separadas por coma)
                     </label>
-                    <input type="password" id="input-api-key" placeholder="sk-or-v1-..." 
+                    <input type="password" id="input-api-key" placeholder="AIza..., gsk_..., sk-or-v1-..." 
                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs outline-none font-mono">
                     <p class="text-[11px] text-slate-500 mt-1">
-                        Se guardará en tu navegador (<code class="bg-slate-100 px-1 py-0.5 rounded">localStorage</code>) para tus consultas si el servidor no tiene clave predeterminada.
+                        Soporta <strong>Google Gemini</strong> (<code>AIza...</code>), <strong>Groq</strong> (<code>gsk_...</code>), <strong>OpenRouter</strong> (<code>sk-or-...</code>), <strong>DeepSeek</strong>, <strong>Cerebras</strong> y <strong>NVIDIA</strong>. El balanceador elegirá automáticamente la API desocupada.
                     </p>
                 </div>
             </div>
@@ -292,7 +292,7 @@
                     Cerrar
                 </button>
                 <button onclick="saveApiKey()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow transition">
-                    Guardar Clave
+                    Guardar Llaves
                 </button>
             </div>
         </div>
@@ -307,7 +307,7 @@
     <script>
         // ESTADO GLOBAL
         let promptsList = [];
-        let serverConfig = { hasServerKey: false, serverActive: false };
+        let serverConfig = { hasServerKey: false, totalKeysInPool: 0, providersCount: {}, serverActive: false };
         let currentGeneratedHtml = '';
         let currentOvaMetadata = null;
         let sessionHistory = [];
@@ -330,7 +330,8 @@
                     serverConfig = await res.json();
                     if (serverConfig.hasServerKey) {
                         statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-                        statusText.textContent = "Servidor con Clave Activa";
+                        const count = serverConfig.totalKeysInPool || 1;
+                        statusText.textContent = count > 1 ? `Pool Multi-API (${count} Motores Activos)` : "Servidor con Clave Activa";
                     } else {
                         statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
                         statusText.textContent = "Sin Clave en Servidor (Usa Personal)";
@@ -339,7 +340,7 @@
                     throw new Error('Servidor no respondió');
                 }
             } catch (err) {
-                serverConfig = { hasServerKey: false, serverActive: false };
+                serverConfig = { hasServerKey: false, totalKeysInPool: 0, serverActive: false };
                 statusDot.className = "w-2.5 h-2.5 rounded-full bg-rose-400";
                 statusText.textContent = "Modo Cliente Autónomo";
             }
@@ -415,10 +416,10 @@
             const key = document.getElementById('input-api-key').value.trim();
             if (key) {
                 localStorage.setItem('teacherstools_openrouter_key', key);
-                showToast('API Key guardada en tu navegador', '🔑');
+                showToast('Llaves guardadas en el Pool local', '🔑');
             } else {
                 localStorage.removeItem('teacherstools_openrouter_key');
-                showToast('Clave eliminada de tu navegador', '🗑️');
+                showToast('Llaves locales eliminadas', '🗑️');
             }
             toggleConfigModal();
         }
@@ -431,14 +432,15 @@
             if (isHidden) {
                 modal.classList.remove('hidden');
                 if (serverConfig.hasServerKey) {
+                    const total = serverConfig.totalKeysInPool || 1;
                     infoEl.innerHTML = `
-                        <p class="text-emerald-700 font-semibold mb-1">🟢 Clave de Servidor Detectada</p>
-                        <p>El backend de Render tiene configurada la variable <code>OPENROUTER_API_KEY</code>. Puedes generar sin ingresar una clave personal, o colocar una abajo para anularla temporalmente.</p>
+                        <p class="text-emerald-700 font-semibold mb-1">🟢 Balanceador Multi-API Activo (${total} ${total === 1 ? 'motor' : 'motores'})</p>
+                        <p>El servidor distribuye automáticamente cada pestaña/usuario al motor de IA desocupado con respaldo automático anti-bloqueo.</p>
                     `;
                 } else {
                     infoEl.innerHTML = `
-                        <p class="text-amber-700 font-semibold mb-1">🟡 Sin Clave Global en Servidor</p>
-                        <p>Para generar OVAs ingresa tu propia clave de OpenRouter (comienza con <code>sk-or-v1-...</code>). Quedará guardada localmente en tu navegador de forma segura.</p>
+                        <p class="text-amber-700 font-semibold mb-1">🟡 Sin Llaves en Servidor</p>
+                        <p>Ingresa una o varias llaves separadas por coma (Gemini <code>AIza...</code>, Groq <code>gsk_...</code> u OpenRouter <code>sk-or-v1-...</code>).</p>
                     `;
                 }
             } else {
