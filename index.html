@@ -136,6 +136,7 @@
                         <select id="select-model" 
                                 class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs outline-none bg-white font-medium">
                             <option value="deepseek/deepseek-chat" selected>DeepSeek Chat (Predeterminado — Rápido, económico y 100% activo)</option>
+                            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Gratuito en OpenRouter — Ultra Rápido)</option>
                             <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Requiere saldo premium en OpenRouter)</option>
                             <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Google)</option>
                             <option value="openai/gpt-4o">GPT-4o (OpenAI)</option>
@@ -558,6 +559,19 @@ Dentro de <div class="workshop-section">, genera <div class="workshop-header">TA
 - Para las 2 de Mapa Conceptual / Cuadro Comparativo:
   <div class="activity-card type-mapa"><div class="type-label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> N. Mapa Conceptual / Cuadro Comparativo</div><div class="activity-text">...</div></div>`;
 
+        // REGLA SUPREMA DE DESARROLLO (ESTRICTA, OBLIGATORIA Y PENALIZADA)
+        const supremeDevRule = `REGLA SUPREMA DE DESARROLLO (ESTRICTA, OBLIGATORIA Y PENALIZADA):
+1. EL CÓDIGO JAVASCRIPT DEL JUEGO ES LA PRIORIDAD #1:
+   Debes escribir TODO el código JavaScript completo y 100% funcional dentro de <script>.
+   ESTÁ TERMINANTEMENTE PROHIBIDO usar comentarios como '// Aquí iría el código', '// TODO', '// implementar lógica', o dejar funciones vacías. Si el juego no es 100% interactivo y jugable desde el segundo cero (con eventos táctiles, clics, cronómetro, validación y modal de victoria), EL ARCHIVO SERÁ CONSIDERADO INVÁLIDO.
+2. ORDEN DE CONSTRUCCIÓN OBLIGATORIO:
+   - Primero: CSS responsive embebido (con clases para el juego y para el taller: .type-responder, .type-analizar, .type-dibujar, .type-mapa).
+   - Segundo: Contenedor HTML del juego interactivo.
+   - Tercero: Código JavaScript completo y sin omisiones dentro de <script>.
+   - Cuarto: <section id='zona-lectura'> con artículo teórico inductivo profundo (>500 palabras reales).
+   - Quinto: Taller de 10 actividades en tarjetas individuales con sus clases (.type-responder en azul, .type-analizar en naranja, .type-dibujar en púrpura y .type-mapa en verde).
+3. FORMATO DE ENTREGA: Entrega ÚNICAMENTE el archivo HTML completo y autocontenido dentro de un solo bloque de código (\`\`\`html ... \`\`\`), sin texto conversacional previo ni explicaciones posteriores.`;
+
         // CONSTRUCCIÓN DEL PROMPT FINAL
         function buildFinalPrompt(dinamica, temaUsuario, gradoUsuario) {
             let prompt = String(dinamica.content || dinamica.template || '');
@@ -580,6 +594,14 @@ Dentro de <div class="workshop-section">, genera <div class="workshop-header">TA
             const legacyPhase3Regex = /FASE 3: LECTURA TEÓRICA Y TALLER DE REPASO[\s\S]*?encaje perfectamente en móviles\./;
             if (legacyPhase3Regex.test(prompt)) {
                 prompt = prompt.replace(legacyPhase3Regex, mandatoryPhase3Spec);
+            }
+
+            // Garantizar que la REGLA SUPREMA DE DESARROLLO esté presente y actualizada
+            const legacyRuleRegex = /REGLA SUPREMA DE GENERACIÓN Y DESARROLLO[\s\S]*$/;
+            if (legacyRuleRegex.test(prompt)) {
+                prompt = prompt.replace(legacyRuleRegex, supremeDevRule);
+            } else if (!prompt.includes('REGLA SUPREMA DE DESARROLLO (ESTRICTA, OBLIGATORIA Y PENALIZADA):')) {
+                prompt = prompt.trim() + '\n\n' + supremeDevRule;
             }
 
             return prompt;

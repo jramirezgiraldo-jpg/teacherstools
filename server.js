@@ -414,8 +414,30 @@ async function ensureCompleteHtml(entry, rawContent, preferredModel) {
     const hasScriptOpen = /<script\b/i.test(cleaned);
     const hasScriptClose = /<\/script>/i.test(cleaned);
 
+    // Extraer el contenido de <script> para verificar que no sea un comentario placeholder vacío
+    const scriptMatches = [...cleaned.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+    const totalScriptCode = scriptMatches.map(m => m[1].trim()).join('\n');
+    const hasLazyPlaceholder = /\/\/\s*(aquí iría|código aquí|implementar lógica|todo:|resto del código)/i.test(totalScriptCode) || (hasScriptOpen && hasScriptClose && totalScriptCode.length < 300);
+
+    if (hasLazyPlaceholder) {
+        console.log(`[AutoRepairJS] Detectado <script> vacío o con comentario placeholder (${totalScriptCode.length} chars). Solicitando programación JS completa...`);
+        const gameSectionMatch = cleaned.match(/<section[^>]*id=["']zona-juego["'][^>]*>[\s\S]*?<\/section>/i) || cleaned.match(/<body[^>]*>[\s\S]{0,4000}/i);
+        const htmlContext = gameSectionMatch ? gameSectionMatch[0] : cleaned.slice(0, 4000);
+        const repairPrompt = `En el siguiente archivo HTML de un juego educativo interactivo dejaste el bloque <script> vacío o con un comentario placeholder:\n\n${htmlContext}\n\nESCRIBE ÚNICAMENTE EL BLOQUE <script>...</script> COMPLETO Y 100% FUNCIONAL que hace funcionar todos los elementos, botones, tablero, cronómetro, puntaje y modal de victoria de este HTML. PROHIBIDO usar comentarios de omisión. Entrega solo <script>...código completo...</script>.`;
+        const repairResult = await callProvider(entry, [{ role: 'user', content: repairPrompt }], repairPrompt, preferredModel);
+        if (repairResult.ok && repairResult.content) {
+            let jsBlock = repairResult.content.replace(/^```(?:html|javascript|js)?\s*/i, '').replace(/```\s*$/i, '').trim();
+            if (!/^<script/i.test(jsBlock)) {
+                jsBlock = `<script>\n${jsBlock}\n</script>`;
+            }
+            cleaned = cleaned.replace(/<script\b[^>]*>[\s\S]*?<\/script>/i, jsBlock);
+            console.log(`[AutoRepairJS] Bloque <script> reparado exitosamente (${jsBlock.length} bytes).`);
+            return cleaned;
+        }
+    }
+
     if (hasHtmlClose && (!hasScriptOpen || hasScriptClose)) {
-        return rawContent;
+        return cleaned;
     }
 
     console.log(`[AutoContinue] Detectado HTML/Script truncado (${cleaned.length} bytes). Solicitando continuación automática a [${entry.provider.toUpperCase()}]...`);
