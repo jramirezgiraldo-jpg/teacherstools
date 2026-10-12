@@ -167,7 +167,7 @@
                 <ul class="space-y-1.5 list-disc list-inside text-blue-800/90 pl-1">
                     <li><strong>100% OFFLINE:</strong> Cero CDNs, tipografía nativa del sistema, iconos SVG inline y Web Audio/Speech puros.</li>
                     <li><strong>Mínimo 10 Minutos de Juego:</strong> Multinivel (≥3 rondas), temporizador en HUD y candado de finalización.</li>
-                    <li><strong>Fase 3 Visible:</strong> Artículo teórico (>500 palabras) y Taller de 10 actividades para el cuaderno.</li>
+                    <li><strong>Fase 3 Rigurosa (>500 palabras):</strong> Artículo teórico en 4 secciones obligatorias y Taller de 10 actividades 100% ancladas al texto.</li>
                     <li><strong>Móvil y Pantallas Táctiles:</strong> Viewport protegido con <code class="bg-blue-200/50 px-1 py-0.5 rounded">touch-action: none</code> y tipografía fluida <code class="bg-blue-200/50 px-1 py-0.5 rounded">clamp()</code>.</li>
                 </ul>
             </div>
@@ -448,7 +448,29 @@
             }
         }
 
-        // CONSTRUCCIÓN DEL PROMPT FINAL (100% IDÉNTICO AL COPIAR Y PEGAR DEL ARCHIVO ORIGINAL)
+        // DIRECTIVA OBLIGATORIA PARA LA FASE 3 (ARTÍCULO TEÓRICO EN 4 SECCIONES >500 PALABRAS + TALLER ANCLADO DE 10 ACTIVIDADES)
+        const mandatoryPhase3Spec = `FASE 3: ARTÍCULO TEÓRICO RIGUROSO (MÍNIMO 500 PALABRAS REALES) Y TALLER ANCLADO:
+La sección pedagógica ubicada debajo del juego interactivo es OBLIGATORIA y DEBE cumplir estrictamente con los siguientes estándares de profundidad:
+
+1. ESTRUCTURA OBLIGATORIA DEL ARTÍCULO TEÓRICO (MÍNIMO 500 PALABRAS):
+   ESTRICTAMENTE PROHIBIDO resumir el tema en 2 párrafos breves o listas esquemáticas. El texto debe ser un artículo educativo profundo, redactado en prosa fluida y dividido en 4 secciones obligatorias:
+   - <h2>Título del Tema Curricular</h2>
+   - <h3>1. Fundamentos Conceptuales y Principios Clave</h3>: Mínimo 2 párrafos profundos explicando la definición, contexto, etimología e importancia general del tema.
+   - <h3>2. Estructura, Procesos y Mecanismos Detallados</h3>: Mínimo 3 párrafos técnicos explicando paso a paso cómo funciona el fenómeno, sus etapas, partes u órganos involucrados, interacciones y fórmulas/leyes asociadas.
+   - <h3>3. Aplicación en la Vida Real, Salud o Ecosistemas</h3>: Mínimo 2 párrafos analizando su relevancia en el mundo real, repercusiones cotidianas y fenómenos observables.
+   - <h3>4. Factores de Riesgo, Desequilibrios y Análisis de Casos</h3>: Mínimo 2 párrafos discutiendo qué ocurre cuando el sistema falla o se altera, aportando ejemplos concretos.
+   (La suma de estas 4 secciones DEBE superar las 500 palabras reales de contenido formativo de alto nivel).
+
+2. TALLER DE REPASO DE 10 ACTIVIDADES (ESTRICTA CORRESPONDENCIA TEXTUAL):
+   - Encabezado destacado: 'Escribe y resuelve estas actividades en tu cuaderno'.
+   - REGLA DE ORO DE CORRESPONDENCIA: Cada una de las 10 preguntas DEBE poder responderse, justificarse o deducirse DIRECTAMENTE a partir de los datos, explicaciones y conceptos desarrollados en el artículo teórico anterior. CERO preguntas que requieran buscar en internet.
+   - Alternancia obligatoria de formatos en las 10 preguntas:
+     * 3 Preguntas de respuesta directa y conceptualización.
+     * 3 Preguntas de análisis crítico y resolución de situaciones problema.
+     * 2 Actividades de dibujo técnico, rotulado o esquemas visuales.
+     * 2 Actividades de síntesis (mapa mental, cuadro comparativo o diagrama de flujo).`;
+
+        // CONSTRUCCIÓN DEL PROMPT FINAL
         function buildFinalPrompt(dinamica, temaUsuario, gradoUsuario) {
             let prompt = String(dinamica.content || dinamica.template || '');
 
@@ -464,6 +486,12 @@
                 prompt = prompt
                     .replace(/^TEMA CURRICULAR:\s*\[.*?\]/m, `TEMA CURRICULAR: [${temaUsuario}]`)
                     .replace(/^(POBLACIÓN OBJETIVO:.*)$/m, `$1 (Grado: ${gradoUsuario})`);
+            }
+
+            // Garantizar que la especificación de Fase 3 tenga la estructura obligatoria de 4 secciones (>500 palabras) y taller anclado
+            const legacyPhase3Regex = /FASE 3: LECTURA TEÓRICA Y TALLER DE REPASO[\s\S]*?encaje perfectamente en móviles\./;
+            if (legacyPhase3Regex.test(prompt)) {
+                prompt = prompt.replace(legacyPhase3Regex, mandatoryPhase3Spec);
             }
 
             return prompt;
