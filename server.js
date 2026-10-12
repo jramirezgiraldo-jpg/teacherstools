@@ -120,29 +120,20 @@ const server = http.createServer((req, res) => {
                     return sendJSON(res, 400, { error: 'El campo "prompt" es obligatorio.' });
                 }
 
-                const defaultSystemInstruction = `Actúa como un Desarrollador Web Front-End Senior, Diseñador UI/UX Educativo y Diseñador Instruccional de clase mundial.
-Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, altamente visual, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado.
+                const defaultSystemInstruction = `Actúa como un Desarrollador Web Front-End Senior, Diseñador UI/UX Educativo y Diseñador Instruccional del Instituto Montenegro.
+Tu misión es generar ÚNICAMENTE el código HTML completo, interactivo, colorido, profesional y 100% OFFLINE del Objeto Virtual de Aprendizaje (OVA) solicitado, siguiendo de manera estricta la arquitectura CSS, HTML y JavaScript especificada en el prompt del usuario.
 
-REGLAS DE DISEÑO VISUAL Y ESTÉTICA PREMIUM (OBLIGATORIAS):
-1. PALETA DE COLORES VIBRANTE Y TEMÁTICA:
-   - Define variables CSS (:root) con una paleta cromática armónica, rica y temática al contenido (ej. azul profundo y esmeralda para biología/ecosistemas, púrpura y magenta para matemáticas/lógica, ámbar y naranja cálido para historia).
-   - Fondos suaves degradados o contrastados (evita fondos blancos planos y aburridos; usa fondos sutiles como #f1f8e9, #f0fdf4 o #eff6ff con tarjetas blancas limpias).
-2. ENCABEZADO IMPACTANTE:
-   - Header con degradado CSS fluido (linear-gradient), tipografía elegante, sombras y detalles SVG decorativos sutiles.
-3. TARJETAS, HUD Y COMPONENTES MODERNOS:
-   - Contenedores con border-radius generoso (14px a 20px), sombras pulidas (box-shadow: 0 10px 25px rgba(0,0,0,0.08)) y bordes de acento de 4-6px.
-   - HUD superior con cronómetro de práctica, metas, medidores de vidas/puntos, badges redondeados tipo píldora (pill badges).
-   - Animaciones y microinteracciones CSS fluidas: transiciones en hover, popIn al acertar, shake suave al fallar, estados activos luminosos y modales de victoria con confeti SVG o animaciones de celebración.
-4. FASE 3 DE ALTA CALIDAD EDITORIAL:
-   - Artículo estructurado tipo revista científica o enciclopedia escolar moderna: subtítulos h3 con íconos o viñetas temáticas, cajas destacadas (.info-box) para conceptos clave, tipografía con line-height amplio y taller de 10 actividades en una tarjeta (.workshop) visualmente atractiva con llamadas a la acción para el cuaderno.
-
-REGLAS TÉCNICAS ESTRICTAS:
-1. Responde entregando ÚNICAMENTE el código HTML completo y autocontenido dentro de un solo bloque de código \`\`\`html ... \`\`\`.
-2. NO incluyas introducciones, ni saludos, ni explicaciones posteriores.
-3. 100% OFFLINE: CERO enlaces a CDNs (sin Tailwind externo, sin Google Fonts, sin Bootstrap). Usa tipografías del sistema (system-ui) e iconos SVG puros incrustados.
-4. JavaScript 100% implementado, interactivo y sin omisiones de código (cero '// implementar aquí').
-5. FASE 3 visible debajo del juego con artículo (>500 palabras) y taller de 10 actividades.
-6. Temporizador con meta de práctica de 10:00 minutos y candado de finalización reflexiva.`;
+ESTÁNDARES DE CALIDAD VISUAL Y FUNCIONALIDAD (INSTITUTO MONTENEGRO):
+1. ZONA DE JUEGO (#zona-juego) DE ALTO IMPACTO:
+   - Implementa exactamente los estilos oscuros inmersivos (#111827 / #0f172a) o encabezados con degradados vibrantes (linear-gradient) indicados en la plantilla de la dinámica.
+   - Incluye la barra de estado (.status-bar / .stats) con el cronómetro '⏱️ Tiempo: MM:SS / 10:00', contador de aciertos/rondas, errores y calificación dinámica de 1.0 a 5.0.
+   - Incorpora iconografía SVG inline, botones y píldoras redondeadas (border-radius: 50px), y animaciones CSS (@keyframes popOut, popIn, shakeError).
+   - Aplica 'touch-action: none' y 'user-select: none' en los contenedores táctiles del juego.
+2. FASE 3 EDITORIAL (#zona-lectura) SIEMPRE VISIBLE DEBAJO DEL JUEGO:
+   - Contenedor claro (#f8fafc) con tarjeta '.article-container' (fondo blanco, border-radius: 16px, max-width: 850px), subtítulos h2 con borde inferior esmeralda (#059669), h3 con borde izquierdo (#4ade80) y caja '.highlight-box' (#ecfdf5).
+   - Sección '.workshop-section' con '.instruction-box' amarilla punteada y lista numerada '.question-list' de 10 tarjetas '.question-item', cada una con su etiqueta '.badge' coloreada (.badge-answer azul #3b82f6, .badge-draw verde #10b981, .badge-critical rojo #ef4444, .badge-map morado #8b5cf6).
+3. CÓDIGO 100% FUNCIONAL Y SIN OMISIONES:
+   - Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\` completo desde <!DOCTYPE html> hasta </html>, sin texto conversacional ni bloques truncados.`;
 
                 const effectiveSystemInstruction = data.systemPrompt || defaultSystemInstruction;
 
@@ -156,7 +147,21 @@ REGLAS TÉCNICAS ESTRICTAS:
                     max_tokens: 8000
                 };
 
-                const response = await callOpenRouter(effectiveKey, openRouterPayload);
+                let response = await callOpenRouter(effectiveKey, openRouterPayload);
+
+                // Si OpenRouter devuelve 402 por límite de créditos en max_tokens, ajustar automáticamente y reintentar
+                if (response.statusCode === 402) {
+                    const errMsg = response.data?.error?.message || '';
+                    const affordMatch = errMsg.match(/can only afford\s+(\d+)/i);
+                    if (affordMatch && affordMatch[1]) {
+                        const affordableTokens = parseInt(affordMatch[1], 10);
+                        if (affordableTokens > 1500) {
+                            openRouterPayload.max_tokens = Math.max(1500, affordableTokens - 150);
+                            console.log(`[teacherstools] Reintentando automáticamente con max_tokens=${openRouterPayload.max_tokens}`);
+                            response = await callOpenRouter(effectiveKey, openRouterPayload);
+                        }
+                    }
+                }
 
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                     const messageContent = response.data.choices?.[0]?.message?.content || '';
