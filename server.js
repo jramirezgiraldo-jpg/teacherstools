@@ -422,6 +422,44 @@ async function callProvider(entry, systemPrompt, userPrompt, preferredModel) {
 }
 
 // ============================================================================
+// AUTO-CONTINUACIÓN INTELIGENTE SI UN OVA SUPERA EL LÍMITE DE TOKENS Y SE CORTA
+// ============================================================================
+async function ensureCompleteHtml(entry, systemPrompt, userPrompt, rawContent, preferredModel) {
+    let cleaned = rawContent.replace(/```\s*$/, '').trim();
+    const hasHtmlClose = /<\/html>/i.test(cleaned);
+    const hasScriptOpen = /<script\b/i.test(cleaned);
+    const hasScriptClose = /<\/script>/i.test(cleaned);
+
+    if (hasHtmlClose && (!hasScriptOpen || hasScriptClose)) {
+        return rawContent;
+    }
+
+    console.log(`[AutoContinue] Detectado HTML/Script truncado (${cleaned.length} bytes). Solicitando continuación automática a [${entry.provider.toUpperCase()}]...`);
+    const tailContext = cleaned.slice(-1200);
+    const continuationPrompt = `El código HTML/JS del OVA anterior quedó cortado exactamente al final de este fragmento:\n\n${tailContext}\n\nINSTRUCCIÓN CRÍTICA: Continúa escribiendo ÚNICAMENTE el código faltante exactamente desde el último carácter donde se cortó, completando todas las funciones JavaScript pendientes, ejecutando la inicialización del juego (ej. initGame()) y cerrando con </script></body></html>. NO repitas el código ya escrito ni agregues explicaciones.`;
+
+    const contResult = await callProvider(entry, systemPrompt, continuationPrompt, preferredModel);
+    if (contResult.ok && contResult.content) {
+        let contText = contResult.content
+            .replace(/^```(?:html|javascript|js)?\s*/i, '')
+            .replace(/```\s*$/i, '');
+
+        // Evitar duplicación si el modelo repitió las últimas líneas del tailContext
+        const lastLines = cleaned.split('\n').slice(-4).join('\n').trim();
+        if (lastLines.length > 20 && contText.includes(lastLines)) {
+            const idx = contText.indexOf(lastLines);
+            contText = contText.substring(idx + lastLines.length);
+        }
+
+        const stitched = cleaned + contText;
+        console.log(`[AutoContinue] Código completado exitosamente (${stitched.length} bytes totales).`);
+        return stitched;
+    }
+
+    return rawContent;
+}
+
+// ============================================================================
 // SERVIDOR HTTP PRINCIPAL
 // ============================================================================
 const server = http.createServer((req, res) => {
@@ -495,10 +533,14 @@ ESTÁNDARES DE CALIDAD VISUAL Y FUNCIONALIDAD (INSTITUTO MONTENEGRO):
 2. FASE 3 EDITORIAL (#zona-lectura) SIEMPRE VISIBLE DEBAJO DEL JUEGO:
    - Contenedor claro (#f8fafc) con tarjeta '.article-container' (fondo blanco, border-radius: 16px, max-width: 850px), subtítulos h2 con borde inferior esmeralda (#059669), h3 con borde izquierdo (#4ade80) y caja '.highlight-box' (#ecfdf5).
    - Sección '.workshop-section' con '.instruction-box' amarilla punteada y lista numerada '.question-list' de 10 tarjetas '.question-item', cada una con su etiqueta '.badge' coloreada (.badge-answer azul #3b82f6, .badge-draw verde #10b981, .badge-critical rojo #ef4444, .badge-map morado #8b5cf6).
-3. CÓDIGO 100% FUNCIONAL Y SIN OMISIONES:
-   - Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\` completo desde <!DOCTYPE html> hasta </html>, sin texto conversacional ni bloques truncados.`;
+3. OPTIMIZACIÓN CSS COMPACTA Y SCRIPT 100% FUNCIONAL (PROHIBIDO CORTAR EL CÓDIGO):
+   - Escribe cada regla CSS en una sola línea compacta (ej: '.chip { padding: 12px 22px; border-radius: 50px; cursor: pointer; }') sin saltos de línea innecesarios para ahorrar espacio de tokens y asegurar que el bloque <script> se escriba completo al 100%.
+   - Verifica que todas las funciones JavaScript estén cerradas, que la función inicializadora (ej. initGame()) se ejecute al cargar el documento renderizando inmediatamente las fichas/preguntas en el área de juego, y que el archivo cierre con </script></body></html>.
+   - Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\` completo desde <!DOCTYPE html> hasta </html>, sin texto conversacional.`;
 
-            const effectiveSystemInstruction = data.systemPrompt || defaultSystemInstruction;
+            const effectiveSystemInstruction = data.systemPrompt
+                ? `${data.systemPrompt}\n\nREGLA CRÍTICA ANTI-TRUNCAMIENTO: Escribe las reglas CSS de forma compacta (una línea por selector) para no agotar el límite de tokens y garantizar que todo el bloque <script> y la llamada a initGame() lleguen hasta </script></body></html> sin cortarse.`
+                : defaultSystemInstruction;
 
             await acquireConcurrencySlot(pool.length);
 
@@ -518,8 +560,9 @@ ESTÁNDARES DE CALIDAD VISUAL Y FUNCIONALIDAD (INSTITUTO MONTENEGRO):
                         const result = await callProvider(entry, effectiveSystemInstruction, promptText, model);
 
                         if (result.ok && result.content) {
+                            const finalContent = await ensureCompleteHtml(entry, effectiveSystemInstruction, promptText, result.content, model);
                             return sendJSON(res, 200, {
-                                content: result.content,
+                                content: finalContent,
                                 modelUsed: result.modelUsed,
                                 providerUsed: result.provider
                             });

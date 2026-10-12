@@ -502,30 +502,30 @@ Todo OVA generado DEBE estar diseñado para garantizar un tiempo de interacción
         // LIMPIEZA DEL HTML DEVUELTO POR EL LLM
         function extractCleanHtml(rawContent) {
             if (!rawContent) return '';
-            
-            // Buscar bloque ```html ... ```
+
+            // Prioridad 1: Extraer directamente desde <!DOCTYPE html> hasta </html> (funciona con o sin bloques ```)
+            const docTypeIndex = rawContent.search(/<!DOCTYPE\s+html/i);
+            if (docTypeIndex !== -1) {
+                const htmlEndIndex = rawContent.toLowerCase().lastIndexOf('</html>');
+                if (htmlEndIndex !== -1) {
+                    return rawContent.substring(docTypeIndex, htmlEndIndex + 7).trim();
+                }
+                return rawContent.substring(docTypeIndex).replace(/```\s*$/, '').trim();
+            }
+
+            // Prioridad 2: Buscar bloque ```html ... ```
             const match = rawContent.match(/```html\s*([\s\S]*?)\s*```/i);
             if (match && match[1]) {
                 return match[1].trim();
             }
 
-            // Si vino con ``` ... ``` sin especificar html
+            // Prioridad 3: Si vino con ``` ... ``` genérico
             const genericMatch = rawContent.match(/```\s*([\s\S]*?)\s*```/);
-            if (genericMatch && genericMatch[1] && genericMatch[1].includes('<!DOCTYPE') || (genericMatch && genericMatch[1] && genericMatch[1].includes('<html'))) {
+            if (genericMatch && genericMatch[1] && (genericMatch[1].includes('<!DOCTYPE') || genericMatch[1].includes('<html'))) {
                 return genericMatch[1].trim();
             }
 
-            // Si vino directamente el código HTML con <!DOCTYPE html>
-            const docTypeIndex = rawContent.indexOf('<!DOCTYPE');
-            if (docTypeIndex !== -1) {
-                const htmlEndIndex = rawContent.lastIndexOf('</html>');
-                if (htmlEndIndex !== -1) {
-                    return rawContent.substring(docTypeIndex, htmlEndIndex + 7).trim();
-                }
-                return rawContent.substring(docTypeIndex).trim();
-            }
-
-            return rawContent.trim();
+            return rawContent.replace(/^```(?:html)?\s*/i, '').replace(/```\s*$/i, '').trim();
         }
 
         // MANEJO DE LA GENERACIÓN
@@ -553,7 +553,7 @@ Todo OVA generado DEBE estar diseñado para garantizar un tiempo de interacción
             // Validar clave disponible
             if (!serverConfig.hasServerKey && !personalKey) {
                 toggleConfigModal();
-                showToast('Ingresa tu API Key de OpenRouter para continuar.', '🔑');
+                showToast('Ingresa tu API Key para continuar.', '🔑');
                 return;
             }
 
@@ -573,8 +573,10 @@ ESTÁNDARES DE CALIDAD VISUAL Y FUNCIONALIDAD (INSTITUTO MONTENEGRO):
 2. FASE 3 EDITORIAL (#zona-lectura) SIEMPRE VISIBLE DEBAJO DEL JUEGO:
    - Contenedor claro (#f8fafc) con tarjeta '.article-container' (fondo blanco, border-radius: 16px, max-width: 850px), subtítulos h2 con borde inferior esmeralda (#059669), h3 con borde izquierdo (#4ade80) y caja '.highlight-box' (#ecfdf5).
    - Sección '.workshop-section' con '.instruction-box' amarilla punteada y lista numerada '.question-list' de 10 tarjetas '.question-item', cada una con su etiqueta '.badge' coloreada (.badge-answer azul #3b82f6, .badge-draw verde #10b981, .badge-critical rojo #ef4444, .badge-map morado #8b5cf6).
-3. CÓDIGO 100% FUNCIONAL Y SIN OMISIONES:
-   - Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\` completo desde <!DOCTYPE html> hasta </html>, sin texto conversacional ni bloques truncados.`;
+3. OPTIMIZACIÓN CSS COMPACTA Y SCRIPT 100% FUNCIONAL (PROHIBIDO CORTAR EL CÓDIGO):
+   - Escribe cada regla CSS en una sola línea compacta (ej: '.chip { padding: 12px 22px; border-radius: 50px; cursor: pointer; }') sin saltos de línea innecesarios para ahorrar espacio de tokens y asegurar que el bloque <script> se escriba completo al 100%.
+   - Verifica que todas las funciones JavaScript estén cerradas, que la función inicializadora (ej. initGame()) se ejecute al cargar el documento renderizando inmediatamente las fichas/preguntas en el área de juego, y que el archivo cierre con </script></body></html>.
+   - Entrega ÚNICAMENTE el bloque \`\`\`html ... \`\`\` completo desde <!DOCTYPE html> hasta </html>, sin texto conversacional.`;
 
             try {
                 const res = await fetch('/api/generate', {
